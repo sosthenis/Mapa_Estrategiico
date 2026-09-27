@@ -1,0 +1,2157 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Gerador e Modelador de Mapas Estratégicos — BSC × SWOT</title>
+<style>
+:root{
+  --bg:#eef2f7; --panel:#ffffff; --ink:#0f172a; --ink2:#334155; --muted:#64748b;
+  --line:#e2e8f0; --line2:#cbd5e1; --accent:#4f46e5; --accent2:#4338ca;
+  --ok:#059669; --warn:#d97706; --err:#dc2626;
+  --fin:#d97706; --cli:#0d9488; --pro:#2563eb; --pes:#7c3aed;
+  --radius:12px; --shadow:0 1px 2px rgba(15,23,42,.06),0 8px 24px -12px rgba(15,23,42,.18);
+}
+*{box-sizing:border-box}
+html,body{margin:0;padding:0}
+body{
+  background:var(--bg); color:var(--ink);
+  font:14px/1.45 "Segoe UI",Roboto,Helvetica,Arial,"Noto Sans",sans-serif;
+  -webkit-font-smoothing:antialiased;
+}
+h1,h2,h3,h4{margin:0;font-weight:700;letter-spacing:-.01em}
+button,input,select,textarea{font-family:inherit;font-size:13px}
+button{cursor:pointer}
+
+/* ---------- TOPBAR ---------- */
+.topbar{
+  display:flex;flex-wrap:wrap;gap:14px;align-items:center;justify-content:space-between;
+  padding:12px 18px;background:linear-gradient(120deg,#0f172a,#1e293b 55%,#312e81);
+  color:#fff;position:sticky;top:0;z-index:40;box-shadow:0 6px 20px -10px rgba(15,23,42,.6)
+}
+.brand{display:flex;gap:12px;align-items:center;min-width:280px}
+.logo{
+  width:44px;height:44px;border-radius:11px;display:grid;place-items:center;font-weight:800;
+  font-size:13px;letter-spacing:.02em;background:linear-gradient(135deg,#6366f1,#22d3ee);color:#06121f
+}
+.brand h1{font-size:16px}
+.brand .sub{font-size:11.5px;color:#c7d2fe;margin:1px 0 0}
+.actions{display:flex;flex-wrap:wrap;gap:7px}
+.btn{
+  border:1px solid var(--line2);background:#fff;color:var(--ink2);padding:7px 11px;border-radius:9px;
+  font-weight:600;transition:.15s;white-space:nowrap
+}
+.btn:hover{background:#f8fafc;border-color:#94a3b8;transform:translateY(-1px)}
+.btn:active{transform:translateY(0)}
+.btn.primary{background:linear-gradient(135deg,#4f46e5,#4338ca);border-color:#4338ca;color:#fff}
+.btn.primary:hover{background:linear-gradient(135deg,#4338ca,#3730a3)}
+.btn.ghost{background:rgba(255,255,255,.08);color:#e2e8f0;border-color:rgba(255,255,255,.25)}
+.btn.ghost:hover{background:rgba(255,255,255,.18);color:#fff}
+.btn.small{padding:5px 9px;font-size:12px;border-radius:8px}
+.btn.danger{color:var(--err);border-color:#fecaca;background:#fef2f2}
+.btn.danger:hover{background:#fee2e2}
+.btn.on{background:#4f46e5;border-color:#4338ca;color:#fff}
+
+/* ---------- META ---------- */
+.meta{
+  display:grid;grid-template-columns:repeat(auto-fit,minmax(230px,1fr));gap:12px;
+  padding:12px 18px;background:var(--panel);border-bottom:1px solid var(--line)
+}
+.meta label{display:flex;flex-direction:column;gap:4px;font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.04em;color:var(--muted)}
+.meta input{
+  padding:8px 10px;border:1px solid var(--line2);border-radius:9px;background:#fbfcfe;color:var(--ink);
+  font-size:13px;font-weight:500;text-transform:none;letter-spacing:0
+}
+.meta input:focus{outline:2px solid #c7d2fe;border-color:var(--accent);background:#fff}
+.cenario-chip{
+  display:flex;flex-direction:column;gap:4px;font-size:11px;font-weight:700;text-transform:uppercase;
+  letter-spacing:.04em;color:var(--muted)
+}
+.cenario-chip .val{display:flex;gap:6px;align-items:center}
+.cenario-chip .nome{
+  padding:8px 10px;border-radius:9px;background:#eef2ff;border:1px solid #c7d2fe;color:#312e81;
+  font-size:12.5px;font-weight:700;text-transform:none;letter-spacing:0;flex:1;
+  white-space:nowrap;overflow:hidden;text-overflow:ellipsis
+}
+.cenario-chip .data{font-size:10.5px;color:var(--muted);font-weight:600;text-transform:none;letter-spacing:0}
+
+/* ---------- TABS ---------- */
+.tabs{display:flex;gap:6px;padding:10px 18px 0;flex-wrap:wrap;background:var(--bg)}
+.tab{
+  border:1px solid var(--line);border-bottom:none;background:#e6ebf3;color:var(--ink2);
+  padding:9px 15px;border-radius:11px 11px 0 0;font-weight:700;font-size:12.5px
+}
+.tab:hover{background:#dfe6f0}
+.tab.active{background:var(--panel);color:var(--accent2);box-shadow:0 -3px 0 inset var(--accent)}
+main{padding:0 18px 40px}
+.tabpane{display:none;background:var(--panel);border:1px solid var(--line);border-radius:0 var(--radius) var(--radius) var(--radius);padding:16px;box-shadow:var(--shadow)}
+.tabpane.active{display:block}
+
+/* ---------- GENERIC ---------- */
+.pane-head{display:flex;flex-wrap:wrap;gap:10px;align-items:center;justify-content:space-between;margin-bottom:14px}
+.pane-head h2{font-size:16px}
+.pane-head p{margin:2px 0 0;font-size:12px;color:var(--muted)}
+.badge{display:inline-flex;align-items:center;gap:5px;padding:3px 9px;border-radius:999px;font-size:11px;font-weight:700}
+.badge.ok{background:#dcfce7;color:#065f46}
+.badge.err{background:#fee2e2;color:#991b1b}
+.badge.neutro{background:#e2e8f0;color:#334155}
+.hint{font-size:12px;color:var(--muted);font-weight:600}
+.field{display:flex;flex-direction:column;gap:4px}
+.field span{font-size:10.5px;font-weight:700;text-transform:uppercase;letter-spacing:.04em;color:var(--muted)}
+input[type=text],input[type=number],select,textarea{
+  padding:7px 9px;border:1px solid var(--line2);border-radius:8px;background:#fbfcfe;color:var(--ink)
+}
+input:focus,select:focus,textarea:focus{outline:2px solid #c7d2fe;border-color:var(--accent);background:#fff}
+textarea{resize:vertical;min-height:56px;line-height:1.4}
+.row{display:flex;gap:8px;align-items:flex-end;flex-wrap:wrap}
+.grow{flex:1;min-width:150px}
+.chk{display:inline-flex;align-items:center;gap:6px;font-size:12px;font-weight:600;color:var(--ink2);cursor:pointer}
+.chk input{accent-color:var(--accent)}
+.sep{width:1px;height:22px;background:var(--line2);margin:0 4px}
+.empty{font-size:12px;color:var(--muted);font-style:italic;padding:8px 0}
+
+/* ---------- SWOT ---------- */
+.swot-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(290px,1fr));gap:14px}
+.swot-card{border:1px solid var(--line);border-radius:var(--radius);overflow:hidden;background:#fbfcfe}
+.swot-card header{display:flex;justify-content:space-between;align-items:center;padding:10px 12px;color:#fff}
+.swot-card header h3{font-size:13.5px}
+.swot-card header .peso{font-size:11px;font-weight:800;background:rgba(255,255,255,.22);padding:3px 8px;border-radius:999px}
+.swot-card .body{padding:10px;display:flex;flex-direction:column;gap:8px;max-height:420px;overflow:auto}
+.t-F header{background:linear-gradient(135deg,#059669,#047857)}
+.t-Fra header{background:linear-gradient(135deg,#dc2626,#b91c1c)}
+.t-O header{background:linear-gradient(135deg,#0891b2,#0e7490)}
+.t-A header{background:linear-gradient(135deg,#d97706,#b45309)}
+.fator{display:flex;gap:8px;align-items:flex-start;background:#fff;border:1px solid var(--line);border-radius:10px;padding:8px}
+.fator .cod{font-weight:800;font-size:11px;color:var(--ink2);background:#eef2f7;border-radius:6px;padding:3px 6px;min-width:34px;text-align:center}
+.fator .txt{flex:1;font-size:12.5px;color:var(--ink2);line-height:1.38}
+.fator .pw{font-size:11px;font-weight:800;color:var(--muted)}
+.fator textarea{width:100%;font-size:12.5px;min-height:52px}
+.fator .pw-in{width:60px;text-align:right}
+.fator-actions{display:flex;gap:4px;flex-direction:column}
+.iconbtn{border:1px solid var(--line2);background:#fff;border-radius:7px;padding:3px 6px;font-size:11px;line-height:1}
+.iconbtn:hover{background:#f1f5f9}
+.iconbtn.del:hover{background:#fee2e2;border-color:#fecaca}
+.addbox{border:1px dashed var(--line2);border-radius:10px;padding:8px;background:#fff;display:flex;flex-direction:column;gap:6px}
+
+/* ---------- CRUZAMENTOS ---------- */
+.cruz-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(360px,1fr));gap:14px}
+.cruz-card{border:1px solid var(--line);border-radius:var(--radius);background:#fbfcfe;display:flex;flex-direction:column;overflow:hidden}
+.cruz-card header{padding:10px 12px;background:#f1f5f9;border-bottom:1px solid var(--line)}
+.cruz-card header h3{font-size:13.5px}
+.cruz-card header .est{font-size:10.5px;font-weight:800;color:#fff;background:var(--accent);padding:2px 8px;border-radius:999px;margin-left:6px}
+.cruz-card header p{margin:3px 0 0;font-size:11.5px;color:var(--muted)}
+.cruz-card .body{padding:10px;display:flex;flex-direction:column;gap:10px}
+.chips{display:flex;flex-wrap:wrap;gap:6px}
+.chip{
+  display:inline-flex;gap:5px;align-items:center;border:1px solid var(--line2);background:#fff;
+  padding:4px 8px;border-radius:999px;font-size:11.5px;font-weight:600;color:var(--ink2);cursor:pointer
+}
+.chip input{accent-color:var(--accent)}
+.chip.sel{background:#eef2ff;border-color:#a5b4fc;color:#3730a3}
+.oe-item{border:1px solid var(--line);border-left:5px solid var(--accent);border-radius:10px;background:#fff;padding:9px}
+.oe-item .top{display:flex;gap:8px;align-items:center;justify-content:space-between;margin-bottom:5px}
+.oe-item .code{font-weight:800;font-size:12px;color:#fff;background:var(--accent);border-radius:6px;padding:2px 8px}
+.oe-item .txt{font-size:12.5px;color:var(--ink2);line-height:1.4}
+.oe-item .origem{font-size:11px;color:var(--muted);margin-top:6px;border-top:1px dashed var(--line);padding-top:6px}
+.form-add{border:1px solid var(--line);border-radius:10px;padding:10px;background:#fff;display:flex;flex-direction:column;gap:8px}
+.form-add h4{font-size:12px;color:var(--muted);text-transform:uppercase;letter-spacing:.04em}
+
+/* ---------- CONEXOES ---------- */
+table.tbl{width:100%;border-collapse:collapse;font-size:12.5px}
+table.tbl th{text-align:left;background:#f1f5f9;color:var(--ink2);padding:8px;border-bottom:1px solid var(--line2);font-size:11px;text-transform:uppercase;letter-spacing:.04em}
+table.tbl td{padding:7px 8px;border-bottom:1px solid var(--line);vertical-align:top}
+table.tbl tr:hover td{background:#f8fafc}
+.pill{display:inline-block;font-weight:800;font-size:11px;border-radius:6px;padding:2px 7px;color:#fff}
+.arrowcell{font-weight:800;color:var(--accent);text-align:center;white-space:nowrap}
+
+/* ---------- MAPA ---------- */
+.map-toolbar{display:flex;flex-wrap:wrap;gap:8px;align-items:center;padding:9px 11px;background:#f8fafc;border:1px solid var(--line);border-radius:10px;margin-bottom:12px}
+.mapa-grid{display:grid;grid-template-columns:minmax(0,1fr) 340px;gap:14px;align-items:start}
+@media(max-width:1150px){.mapa-grid{grid-template-columns:1fr}}
+.svg-holder{overflow:auto;border:1px solid var(--line);border-radius:var(--radius);background:#fff;max-height:78vh}
+.side{display:flex;flex-direction:column;gap:12px}
+.card-panel{border:1px solid var(--line);border-radius:var(--radius);background:#fbfcfe;overflow:hidden}
+.card-panel>header{padding:9px 12px;background:#f1f5f9;border-bottom:1px solid var(--line);font-size:12px;font-weight:800;text-transform:uppercase;letter-spacing:.04em;color:var(--ink2);display:flex;justify-content:space-between;align-items:center}
+.card-panel .body{padding:11px;display:flex;flex-direction:column;gap:9px;max-height:44vh;overflow:auto}
+.kv{display:flex;justify-content:space-between;gap:10px;font-size:12px;border-bottom:1px dashed var(--line);padding-bottom:5px}
+.kv b{text-transform:uppercase;font-size:10.5px;letter-spacing:.04em;color:var(--muted);font-weight:800}
+.kv span{text-align:right;color:var(--ink2);font-weight:600}
+.mini-list{display:flex;flex-direction:column;gap:5px}
+.mini{display:flex;gap:7px;align-items:flex-start;font-size:12px;color:var(--ink2);background:#fff;border:1px solid var(--line);border-radius:8px;padding:6px 8px}
+.mini .c{font-weight:800;font-size:10.5px;border-radius:5px;padding:2px 6px;color:#fff}
+.mini.clic{cursor:pointer}
+.mini.clic:hover{background:#eef2ff;border-color:#a5b4fc}
+.svg-card{cursor:grab}
+.svg-card.dragging{cursor:grabbing}
+.dropzone{fill:rgba(79,70,229,.07);stroke:#818cf8;stroke-dasharray:6 4;stroke-width:1.5}
+
+/* ---------- MODAL / TOAST ---------- */
+.modal{position:fixed;inset:0;background:rgba(15,23,42,.55);display:none;place-items:center;z-index:60;padding:18px}
+.modal.open{display:grid}
+.modal .box{background:#fff;border-radius:14px;max-width:640px;width:100%;max-height:86vh;overflow:auto;box-shadow:0 30px 60px -20px rgba(15,23,42,.5)}
+.modal .box header{display:flex;justify-content:space-between;align-items:center;padding:13px 16px;border-bottom:1px solid var(--line)}
+.modal .box header h3{font-size:15px}
+.modal .box .body{padding:14px 16px;display:flex;flex-direction:column;gap:12px}
+.modal .box footer{padding:12px 16px;border-top:1px solid var(--line);display:flex;justify-content:flex-end;gap:8px;background:#f8fafc}
+.cen-row{display:flex;gap:9px;align-items:center;border:1px solid var(--line);border-radius:10px;padding:9px;background:#fbfcfe}
+.cen-row.atual{border-color:#a5b4fc;background:#eef2ff}
+.cen-row .info{flex:1;min-width:0}
+.cen-row .info b{font-size:13px;display:block}
+.cen-row .info small{color:var(--muted);font-size:11px}
+#toast{position:fixed;bottom:20px;left:50%;transform:translateX(-50%) translateY(80px);background:#0f172a;color:#fff;
+  padding:11px 18px;border-radius:11px;font-weight:600;font-size:13px;opacity:0;transition:.28s;z-index:99;pointer-events:none;box-shadow:0 12px 30px -10px rgba(0,0,0,.5)}
+#toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
+
+/* ---------- PRINT ---------- */
+@page{size:A3 landscape;margin:8mm}
+@media print{
+  .topbar,.meta,.tabs,.map-toolbar,.side,#toast,.modal{display:none !important}
+  body{background:#fff}
+  main{padding:0}
+  .tabpane{display:none !important;border:none;box-shadow:none;padding:0}
+  #tab-mapa{display:block !important;border:none;padding:0;box-shadow:none}
+  .mapa-grid{display:block}
+  .svg-holder{overflow:visible;border:none;max-height:none}
+  .svg-holder svg{width:100% !important;height:auto !important}
+  .badge-print{display:block !important}
+}
+</style>
+</head>
+<body>
+
+<header class="topbar">
+  <div class="brand">
+    <div class="logo">BSC</div>
+    <div>
+      <h1>Gerador e Modelador de Mapas Estratégicos</h1>
+      <p class="sub">Balanced Scorecard × Cruzamento SWOT — SPA offline, arquivo único</p>
+    </div>
+  </div>
+  <div class="actions">
+    <button id="btnExemplo" class="btn ghost">Carregar Exemplo: COGERH</button>
+    <button id="btnNovo" class="btn ghost">Novo Mapa (em branco)</button>
+    <button id="btnCenarios" class="btn ghost">Cenários</button>
+    <button id="btnExportJson" class="btn ghost">Exportar JSON</button>
+    <button id="btnImportJson" class="btn ghost">Importar JSON</button>
+    <input type="file" id="fileImport" accept="application/json,.json" hidden />
+    <button id="btnPng" class="btn ghost">Baixar PNG</button>
+    <button id="btnPrint" class="btn ghost">Imprimir / PDF</button>
+    <button id="btnAjuda" class="btn ghost">?</button>
+  </div>
+</header>
+
+<section class="meta">
+  <label>Organização <input id="metaOrg" type="text" /></label>
+  <label>Título do Trabalho / Contexto <input id="metaTitulo" type="text" /></label>
+  <label>Orientador / Professor <input id="metaDocente" type="text" /></label>
+  <label>Equipe / Responsáveis <input id="metaEquipe" type="text" /></label>
+  <div class="cenario-chip">
+    Cenário ativo
+    <div class="val">
+      <div class="nome" id="cenNome">—</div>
+      <button id="btnSalvarAgora" class="btn small">Salvar</button>
+    </div>
+    <div class="data" id="cenData"></div>
+  </div>
+</section>
+
+<nav class="tabs">
+  <button class="tab active" data-tab="mapa">1 · Mapa Estratégico</button>
+  <button class="tab" data-tab="swot">2 · Matriz SWOT</button>
+  <button class="tab" data-tab="cruz">3 · Cruzamentos → Objetivos</button>
+  <button class="tab" data-tab="conex">4 · Conexões de Causa e Efeito</button>
+</nav>
+
+<main>
+  <section id="tab-mapa" class="tabpane active">
+    <div class="map-toolbar">
+      <button id="btnAddOE" class="btn small primary">+ Novo objetivo</button>
+      <button id="btnModo" class="btn small">Modo conexão: OFF</button>
+      <span class="sep"></span>
+      <label class="chk"><input type="checkbox" id="chkSetas" checked /> Setas</label>
+      <label class="chk"><input type="checkbox" id="chkCodigos" checked /> Códigos</label>
+      <label class="chk"><input type="checkbox" id="chkRotulos" /> Rótulos das setas</label>
+      <span class="sep"></span>
+      <button id="zoomOut" class="btn small">−</button>
+      <span id="zoomLabel" class="hint">100%</span>
+      <button id="zoomIn" class="btn small">+</button>
+      <button id="zoomFit" class="btn small">Ajustar</button>
+      <span class="sep"></span>
+      <span id="modoHint" class="hint"></span>
+    </div>
+    <div class="mapa-grid">
+      <div id="svgHolder" class="svg-holder"></div>
+      <aside class="side">
+        <div class="card-panel">
+          <header>Ficha técnica do objetivo <span id="detTag" class="badge neutro">nenhum</span></header>
+          <div class="body" id="painelDetalhe"></div>
+        </div>
+        <div class="card-panel">
+          <header>Objetivos do mapa <span id="listaTag" class="badge neutro">0</span></header>
+          <div class="body" id="painelLista"></div>
+        </div>
+      </aside>
+    </div>
+  </section>
+
+  <section id="tab-swot" class="tabpane">
+    <div class="pane-head">
+      <div>
+        <h2>Formulação Estratégica — Cadastro de Fatores SWOT</h2>
+        <p>Adicione, edite ou remova os fatores. A soma dos pesos deve fechar em 100% dentro de cada quadrante.</p>
+      </div>
+      <button id="btnResetPesos" class="btn small">Redistribuir pesos iguais</button>
+    </div>
+    <div id="swotGrid" class="swot-grid"></div>
+  </section>
+
+  <section id="tab-cruz" class="tabpane">
+    <div class="pane-head">
+      <div>
+        <h2>Cruzamentos da Matriz SWOT → Objetivos Estratégicos</h2>
+        <p>Marque os fatores confrontados em cada quadrante e cadastre os objetivos resultantes com sua perspectiva BSC.</p>
+      </div>
+      <span id="cruzResumo" class="badge neutro">0 objetivos</span>
+    </div>
+    <div id="cruzGrid" class="cruz-grid"></div>
+  </section>
+
+  <section id="tab-conex" class="tabpane">
+    <div class="pane-head">
+      <div>
+        <h2>Gerenciador de Relações de Causa e Efeito</h2>
+        <p>Defina origem e destino do fluxo de contribuição. A leitura canônica do BSC é de baixo para cima.</p>
+      </div>
+      <span id="conexResumo" class="badge neutro">0 conexões</span>
+    </div>
+    <div class="form-add" style="margin-bottom:14px">
+      <h4>Adicionar conexão</h4>
+      <div class="row">
+        <div class="field grow"><span>Origem (contribui)</span><select id="selOrigem"></select></div>
+        <div class="field grow"><span>Destino (recebe)</span><select id="selDestino"></select></div>
+      </div>
+      <div class="field"><span>Justificativa da relação (opcional)</span><textarea id="txtJust" placeholder="Ex.: competências digitais viabilizam a diferenciação dos serviços"></textarea></div>
+      <div><button id="btnAddConex" class="btn small primary">Adicionar conexão</button></div>
+    </div>
+    <div style="overflow:auto">
+      <table class="tbl" id="tblConex"></table>
+    </div>
+  </section>
+</main>
+
+<div class="modal" id="modalCenarios">
+  <div class="box">
+    <header>
+      <h3>Controle de Cenários</h3>
+      <button class="iconbtn" data-close="modalCenarios">✕</button>
+    </header>
+    <div class="body">
+      <div class="row">
+        <div class="field grow"><span>Nome do novo cenário</span><input id="novoCenNome" type="text" placeholder="Ex.: COGERH — versão 2" /></div>
+        <button id="btnCriarCen" class="btn small primary">Criar cenário em branco</button>
+        <button id="btnDuplicarCen" class="btn small">Duplicar atual</button>
+      </div>
+      <div id="listaCenarios" style="display:flex;flex-direction:column;gap:9px"></div>
+    </div>
+    <footer><button class="btn small" data-close="modalCenarios">Fechar</button></footer>
+  </div>
+</div>
+
+<div class="modal" id="modalAddOE">
+  <div class="box" style="max-width:720px">
+    <header>
+      <h3>Novo Objetivo Estratégico</h3>
+      <button class="iconbtn" data-close="modalAddOE">✕</button>
+    </header>
+    <div class="body">
+      <div class="row">
+        <div class="field" style="width:110px"><span>Código</span><input id="oeCodigo" type="text" /></div>
+        <div class="field grow"><span>Perspectiva BSC</span><select id="oePerspectiva"></select></div>
+        <div class="field grow"><span>Origem SWOT (opcional)</span><select id="oeQuadrante"></select></div>
+      </div>
+      <div class="field"><span>Título curto (exibido no card)</span><input id="oeCurto" type="text" /></div>
+      <div class="field"><span>Enunciado completo (ficha técnica)</span><textarea id="oeLongo"></textarea></div>
+      <p class="hint">O objetivo pode existir sem vínculo com a matriz SWOT — basta deixar “Sem vínculo” no campo de origem.</p>
+    </div>
+    <footer>
+      <button class="btn small" data-close="modalAddOE">Cancelar</button>
+      <button id="btnConfirmarOE" class="btn small primary">Criar objetivo</button>
+    </footer>
+  </div>
+</div>
+
+<div class="modal" id="modalAjuda">
+  <div class="box" style="max-width:760px">
+    <header>
+      <h3>Como usar</h3>
+      <button class="iconbtn" data-close="modalAjuda">✕</button>
+    </header>
+    <div class="body" id="ajudaBody"></div>
+    <footer><button class="btn small" data-close="modalAjuda">Fechar</button></footer>
+  </div>
+</div>
+
+<div id="toast"></div>
+<script>
+"use strict";
+/* ============================================================
+   P2 — CONSTANTES E DATASET DE REFERÊNCIA (COGERH)
+   Fidelidade: Mapa_Estrategico_COGERH_Organizado.pdf (4 pp.)
+             + Matriz_SWOT_COGERH2.pdf (1 p., com pesos)
+   ============================================================ */
+
+const SCHEMA_VERSION = 1;
+const STORAGE_KEY = "bsc_swot_studio_v1";
+
+/* Perspectivas BSC — array em ordem de RENDERIZAÇÃO (topo -> base).
+   Na tela o topo é o Econômico-Financeiro; a base é Pessoas. */
+const PERSPECTIVAS = [
+  { key: "FIN", nome: "ECONÔMICO-FINANCEIRO", curto: "Econômico-Financeiro",
+    sub: "Resultados, rentabilidade e sustentabilidade financeira",
+    cor: "#d97706", suave: "#fef3c7", borda: "#fcd34d" },
+  { key: "CLI", nome: "CLIENTES E MERCADO", curto: "Clientes e Mercado",
+    sub: "Valor entregue a clientes, usuários e mercado",
+    cor: "#0d9488", suave: "#ccfbf1", borda: "#5eead4" },
+  { key: "PRO", nome: "PROCESSOS INTERNOS E TECNOLOGIA", curto: "Processos Internos e Tecnologia",
+    sub: "Processos críticos, tecnologia e resiliência operacional",
+    cor: "#2563eb", suave: "#dbeafe", borda: "#93c5fd" },
+  { key: "PES", nome: "PESSOAS", curto: "Pessoas",
+    sub: "Aprendizado, crescimento, competências e cultura",
+    cor: "#7c3aed", suave: "#ede9fe", borda: "#c4b5fd" }
+];
+const PERSP_ORDER = PERSPECTIVAS.map(p => p.key);          /* topo -> base */
+const PERSP_ASC = PERSP_ORDER.slice().reverse();           /* base -> topo (leitura canônica) */
+const PERSP_BY_KEY = Object.fromEntries(PERSPECTIVAS.map(p => [p.key, p]));
+const persp = k => PERSP_BY_KEY[k] || { key: k, nome: k, curto: k, cor: "#64748b", suave: "#f1f5f9", borda: "#cbd5e1" };
+
+/* Tipos de fator SWOT */
+const TIPOS = [
+  { key: "F",   nome: "Forças",       classe: "t-F",   cor: "#059669" },
+  { key: "Fra", nome: "Fraquezas",    classe: "t-Fra", cor: "#dc2626" },
+  { key: "O",   nome: "Oportunidades",classe: "t-O",   cor: "#0891b2" },
+  { key: "A",   nome: "Ameaças",      classe: "t-A",   cor: "#d97706" }
+];
+const TIPO_BY_KEY = Object.fromEntries(TIPOS.map(t => [t.key, t]));
+const tipo = k => TIPO_BY_KEY[k] || { key: k, nome: k, classe: "", cor: "#64748b" };
+
+/* Quadrantes de cruzamento (Atividade 7) */
+const QUADRANTES = [
+  { key: "OF",   nome: "Oportunidades × Forças",    estilo: "Maxi-Maxi", tipos: ["O", "F"],
+    sentido: "Promover: usar as forças internas para aproveitar as oportunidades externas." },
+  { key: "OFra", nome: "Oportunidades × Fraquezas", estilo: "Mini-Maxi", tipos: ["O", "Fra"],
+    sentido: "Corrigir: sanar fragilidades internas para conseguir capturar as oportunidades." },
+  { key: "AF",   nome: "Ameaças × Forças",          estilo: "Maxi-Mini", tipos: ["A", "F"],
+    sentido: "Confrontar: mobilizar as forças para reduzir a exposição às ameaças." },
+  { key: "AFra", nome: "Ameaças × Fraquezas",       estilo: "Mini-Mini", tipos: ["A", "Fra"],
+    sentido: "Defender: mitigar fragilidades internas frente a cenários adversos." }
+];
+const QUAD_BY_KEY = Object.fromEntries(QUADRANTES.map(q => [q.key, q]));
+
+/* ---------- Dataset COGERH ---------- */
+function seedCOGERH() {
+  const agora = new Date().toISOString();
+  const F = [
+    ["f1", "F", "Experiência técnica, legitimidade institucional e capilaridade na gestão hídrica estadual — monitoramento, alocação, operação, cobrança, gestão participativa e presença regional. Conhecimento operacional acumulado.", 40],
+    ["f2", "F", "Conhecimento, dados e ativos difíceis de replicar — séries históricas, monitoramento quantitativo/qualitativo, macromedição, transferência hídrica e segurança de barragens.", 35],
+    ["f3", "F", "Mandato jurídico amplo — possibilidade de serviços especializados, parcerias, SPEs, fontes alternativas de água e energia renovável e, desde 2025, execução de novas obras hidráulicas.", 25],
+    ["fra1", "Fra", "Elevada dependência da receita de faturamento da água — aproximadamente 97,26% da receita orçada de 2026.", 45],
+    ["fra2", "Fra", "Estrutura de custos intensiva em infraestrutura, pessoal, energia e manutenção, elevando a rigidez operacional e financeira.", 30],
+    ["fra3", "Fra", "Necessidade de modernização, sucessão, transformação digital, inovação e consolidação de competências para sustentar novos negócios.", 25],
+    ["o1", "O", "Novo mercado de obras, engenharia e serviços especializados — execução de novas obras hidráulicas, atuação compartilhada com a SOHIDRA e prestação de serviços para União, Estados, Municípios, entidades públicas e organizações privadas.", 40],
+    ["o2", "O", "Novos negócios associados à água — reúso, dessalinização, águas subterrâneas, créditos hídricos, PISF, Malha d'Água, CIPP/Hidrogênio Verde e geração de energia renovável.", 35],
+    ["o3", "O", "Transformar conhecimento técnico em produto comercial — O&M, segurança de barragens, PAE, macromedição, laboratório de vazão, monitoramento remoto, modelagem, sistemas de apoio à decisão e inteligência.", 25],
+    ["a1", "A", "Ampliação da participação privada em saneamento e infraestrutura hídrica, criando operadores com capacidade técnica, financeira e operacional para assumir parcelas crescentes das atividades.", 40],
+    ["a2", "A", "Redistribuição ou sobreposição institucional de competências entre COGERH, SOHIDRA, CAGECE, União e operadores federais/privados.", 35],
+    ["a3", "A", "Mudança climática, redução de aportes, poluição/eutrofização e aumento dos custos de segurança hídrica e bombeamento.", 25]
+  ].map(r => ({ id: r[0], tipo: r[1], texto: r[2], peso: r[3], codigo: "" }));
+
+  /* Códigos visíveis derivados da ordem dentro do tipo */
+  ["F", "Fra", "O", "A"].forEach(t => {
+    F.filter(f => f.tipo === t).forEach((f, i) => { f.codigo = t + (i + 1); });
+  });
+
+  const O = [
+    ["obj-oe1", "OE1", "CLI", "OF",
+      "Ampliar a atuação em novos negócios de água e energia, utilizando a experiência técnica e a presença regional.",
+      "Ampliar a atuação em novos negócios de água e energia, utilizando a experiência técnica e a presença regional para fortalecer a segurança hídrica.",
+      ["o2", "f1"]],
+    ["obj-oe2", "OE2", "FIN", "OF",
+      "Ampliar a comercialização de serviços e soluções de inteligência hídrica, gerando novas receitas.",
+      "Ampliar a comercialização de serviços especializados e soluções de inteligência hídrica, transformando dados e conhecimento técnico em novas fontes de receita.",
+      ["o3", "f3", "f2"]],
+    ["obj-oe3", "OE3", "FIN", "OFra",
+      "Reduzir custos unitários de operação e manutenção com eficiência energética, renováveis e tecnologia.",
+      "Reduzir os custos unitários de operação e manutenção por meio de eficiência energética, energia renovável e soluções tecnológicas associadas aos novos negócios.",
+      ["o2", "fra2"]],
+    ["obj-oe4", "OE4", "PES", "OFra",
+      "Desenvolver competências e modernizar processos para comercializar serviços especializados, assegurando sucessão e transferência do conhecimento técnico.",
+      "Desenvolver competências e modernizar processos para comercializar serviços especializados, assegurando sucessão e transferência do conhecimento técnico.",
+      ["o3", "fra3"]],
+    ["obj-oe5", "OE5", "CLI", "AF",
+      "Diferenciar os serviços com dados históricos e conhecimento operacional, ampliando a competitividade.",
+      "Fortalecer a diferenciação dos serviços da COGERH com base nos dados históricos e no conhecimento operacional, ampliando sua competitividade diante dos operadores privados.",
+      ["a1", "f2"]],
+    ["obj-oe6", "OE6", "PRO", "AF",
+      "Ampliar a resiliência hídrica e energética por meio de parcerias, fontes alternativas de água e energia renovável.",
+      "Ampliar a resiliência hídrica e energética por meio de parcerias, fontes alternativas de água e energia renovável, reduzindo a exposição aos riscos climáticos.",
+      ["a3", "f3"]],
+    ["obj-oe7", "OE7", "FIN", "AFra",
+      "Elevar a eficiência operacional e reduzir a rigidez dos custos para sustentar a competitividade e a capacidade financeira.",
+      "Elevar a eficiência operacional e reduzir a rigidez dos custos para sustentar a competitividade e a capacidade financeira diante da expansão dos operadores privados.",
+      ["a1", "fra2"]],
+    ["obj-oe8", "OE8", "PRO", "AFra",
+      "Fortalecer competências, sucessão e transformação digital para antecipar riscos climáticos e de qualidade da água.",
+      "Fortalecer competências, sucessão e transformação digital para antecipar riscos climáticos e de qualidade da água e assegurar a continuidade dos serviços.",
+      ["a3", "fra3"]]
+  ].map(r => ({
+    id: r[0], codigo: r[1], perspectiva: r[2],
+    tituloCurto: r[4], enunciadoCompleto: r[5],
+    swotOrigem: { quadrante: r[3], fatores: r[6] }
+  }));
+
+  const C = [
+    ["obj-oe4", "obj-oe8", "Competências, sucessão e transformação digital viabilizam a antecipação de riscos climáticos e de qualidade da água."],
+    ["obj-oe4", "obj-oe6", "Modernização de processos e base de conhecimento sustentam as parcerias e as fontes alternativas de água e de energia."],
+    ["obj-oe4", "obj-oe2", "Sem competências consolidadas e processos modernizados não há comercialização de serviços especializados nem geração de receita."],
+    ["obj-oe8", "obj-oe5", "Capacidade digital e antecipação de riscos elevam a diferenciação dos serviços diante dos operadores privados."],
+    ["obj-oe8", "obj-oe1", "Capacidade digital e de antecipação de riscos habilita a entrada em novos negócios de água e energia."],
+    ["obj-oe6", "obj-oe1", "Parcerias, fontes alternativas e resiliência energética abrem frentes para novos negócios."],
+    ["obj-oe6", "obj-oe3", "Infraestrutura alternativa e eficiência energética reduzem o custo unitário de operação e manutenção."],
+    ["obj-oe1", "obj-oe2", "A atuação em novos negócios cria o canal comercial para as soluções de inteligência hídrica."],
+    ["obj-oe5", "obj-oe7", "A diferenciação competitiva sustentada em dados protege a rentabilidade e a capacidade financeira."],
+    ["obj-oe3", "obj-oe7", "A redução do custo unitário diminui a rigidez dos custos e sustenta a competitividade."]
+  ].map((r, i) => ({ id: "cx" + (i + 1), de: r[0], para: r[1], justificativa: r[2] }));
+
+  return {
+    schemaVersion: SCHEMA_VERSION,
+    meta: {
+      org: "COGERH — Companhia de Gestão dos Recursos Hídricos do Ceará",
+      titulo: "Mapa Estratégico da COGERH • Gestão Estratégica — Atividades 7 e 8",
+      docente: "Marcos Antonio Martins Lima",
+      equipe: "Sosthenis, Hugo e Ana"
+    },
+    fatores: F,
+    objetivos: O,
+    conexoes: C,
+    ordemPorPerspectiva: {
+      FIN: ["obj-oe2", "obj-oe3", "obj-oe7"],
+      CLI: ["obj-oe1", "obj-oe5"],
+      PRO: ["obj-oe6", "obj-oe8"],
+      PES: ["obj-oe4"]
+    },
+    criadoEm: agora,
+    atualizadoEm: agora
+  };
+}
+
+function estadoVazio(nome) {
+  const agora = new Date().toISOString();
+  return {
+    schemaVersion: SCHEMA_VERSION,
+    meta: {
+      org: nome || "Nova Organização",
+      titulo: "Planejamento Estratégico — Mapa BSC",
+      docente: "",
+      equipe: ""
+    },
+    fatores: [],
+    objetivos: [],
+    conexoes: [],
+    ordemPorPerspectiva: { FIN: [], CLI: [], PRO: [], PES: [] },
+    criadoEm: agora,
+    atualizadoEm: agora
+  };
+}
+/* ============================================================
+   P3 — ESTADO REATIVO, PERSISTÊNCIA, METADADOS E NAVEGAÇÃO
+   ============================================================ */
+const $ = id => document.getElementById(id);
+
+let DB = null;                       /* base persistida: { schemaVersion, currentId, cenarios[] } */
+const UI = {
+  selectedId: null, hoverId: null, modo: false, linkFrom: null,
+  drag: null, drop: null, zoom: 1,
+  setas: true, codigos: true, rotulos: false
+};
+
+let saveTimer = null;
+
+/* ---------------- utilidades ---------------- */
+function uid(p) {
+  return (p || "id") + "-" + Math.random().toString(36).slice(2, 8) + (Date.now() % 1e6).toString(36);
+}
+function esc(s) {
+  return String(s == null ? "" : s).replace(/[&<>"']/g, c => (
+    { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]
+  ));
+}
+function dados() { return cenAtual().data; }
+function cenAtual() {
+  let c = DB.cenarios.find(x => x.id === DB.currentId);
+  if (!c) { c = DB.cenarios[0]; DB.currentId = c.id; }
+  return c;
+}
+function objById(id) { return dados().objetivos.find(o => o.id === id) || null; }
+function fatorById(id) { return dados().fatores.find(f => f.id === id) || null; }
+function fmtData(iso) {
+  if (!iso) return "—";
+  const d = new Date(iso);
+  if (isNaN(d)) return "—";
+  return d.toLocaleString("pt-BR", { day: "2-digit", month: "2-digit", year: "numeric", hour: "2-digit", minute: "2-digit" });
+}
+function toast(msg) {
+  const t = $("toast");
+  t.textContent = msg;
+  t.classList.add("show");
+  clearTimeout(toast._t);
+  toast._t = setTimeout(() => t.classList.remove("show"), 2600);
+}
+function abrirModal(id) { $(id).classList.add("open"); }
+function fecharModal(id) { $(id).classList.remove("open"); }
+
+/* ---------------- códigos automáticos ---------------- */
+function proximoCodigoOE() {
+  let max = 0;
+  dados().objetivos.forEach(o => {
+    const m = /^OE\s*(\d+)$/i.exec(String(o.codigo || "").trim());
+    if (m) max = Math.max(max, parseInt(m[1], 10));
+  });
+  return "OE" + (max + 1);
+}
+function proximoCodigoFator(t) {
+  let max = 0;
+  dados().fatores.filter(f => f.tipo === t).forEach(f => {
+    const m = new RegExp("^" + t + "\\s*(\\d+)$", "i").exec(String(f.codigo || "").trim());
+    if (m) max = Math.max(max, parseInt(m[1], 10));
+  });
+  return t + (max + 1);
+}
+
+/* ---------------- integridade da ordem por raia ---------------- */
+function garantirOrdem() {
+  const d = dados();
+  if (!d.ordemPorPerspectiva) d.ordemPorPerspectiva = { FIN: [], CLI: [], PRO: [], PES: [] };
+  const ids = new Set(d.objetivos.map(o => o.id));
+  PERSP_ORDER.forEach(k => {
+    if (!Array.isArray(d.ordemPorPerspectiva[k])) d.ordemPorPerspectiva[k] = [];
+    d.ordemPorPerspectiva[k] = d.ordemPorPerspectiva[k].filter(id => ids.has(id) && objById(id).perspectiva === k);
+  });
+  d.objetivos.forEach(o => {
+    const k = PERSP_BY_KEY[o.perspectiva] ? o.perspectiva : "PRO";
+    o.perspectiva = k;
+    if (!d.ordemPorPerspectiva[k].includes(o.id)) d.ordemPorPerspectiva[k].push(o.id);
+  });
+  /* remove conexões órfãs */
+  d.conexoes = d.conexoes.filter(c => ids.has(c.de) && ids.has(c.para));
+}
+
+/* ---------------- persistência ---------------- */
+function persistir() {
+  try { localStorage.setItem(STORAGE_KEY, JSON.stringify(DB)); }
+  catch (e) { console.warn("Falha ao gravar localStorage", e); }
+}
+function salvar(msg) {
+  const c = cenAtual(), now = new Date().toISOString();
+  dados().atualizadoEm = now; c.atualizadoEm = now;
+  clearTimeout(saveTimer);
+  saveTimer = setTimeout(persistir, 300);
+  renderChip();
+  if (msg) toast(msg);
+}
+function salvarAgora() {
+  clearTimeout(saveTimer);
+  const c = cenAtual(), now = new Date().toISOString();
+  dados().atualizadoEm = now; c.atualizadoEm = now;
+  persistir(); renderChip();
+  toast("Cenário salvo neste navegador.");
+}
+
+/* ---------------- migração de esquema ---------------- */
+function migrarShapes(p) {
+  p.schemaVersion = p.schemaVersion || SCHEMA_VERSION;
+  const arr = Array.isArray(p.cenarios) ? p.cenarios : [];
+  arr.forEach(c => {
+    const d = c.data || (c.data = estadoVazio("Importado"));
+    d.fatores = Array.isArray(d.fatores) ? d.fatores : [];
+    d.objetivos = Array.isArray(d.objetivos) ? d.objetivos : [];
+    d.conexoes = Array.isArray(d.conexoes) ? d.conexoes : [];
+    d.meta = Object.assign({ org: "", titulo: "", docente: "", equipe: "" }, d.meta || {});
+    d.fatores.forEach(f => { f.id = f.id || uid("fat"); f.peso = Number(f.peso) || 0; f.codigo = f.codigo || ""; });
+    d.objetivos.forEach(o => {
+      o.id = o.id || uid("obj");
+      o.codigo = o.codigo || "";
+      o.perspectiva = PERSP_BY_KEY[o.perspectiva] ? o.perspectiva : "PRO";
+      o.tituloCurto = o.tituloCurto || o.enunciado || o.texto || "";
+      o.enunciadoCompleto = o.enunciadoCompleto || o.enunciado || o.tituloCurto || "";
+      if (!o.swotOrigem || typeof o.swotOrigem !== "object") o.swotOrigem = { quadrante: null, fatores: [] };
+      o.swotOrigem.fatores = Array.isArray(o.swotOrigem.fatores) ? o.swotOrigem.fatores : [];
+    });
+  });
+  return p;
+}
+function carregarDB() {
+  let raw = null;
+  try { raw = localStorage.getItem(STORAGE_KEY); } catch (e) { console.warn(e); }
+  if (raw) {
+    try {
+      const p = JSON.parse(raw);
+      if (p && Array.isArray(p.cenarios) && p.cenarios.length) {
+        DB = migrarShapes(p);
+        if (!DB.cenarios.some(c => c.id === DB.currentId)) DB.currentId = DB.cenarios[0].id;
+        return;
+      }
+    } catch (e) { console.warn("Estado salvo corrompido — recriando.", e); }
+  }
+  const id = uid("cen");
+  DB = {
+    schemaVersion: SCHEMA_VERSION, currentId: id,
+    cenarios: [{
+      id, nome: "COGERH — Exemplo (Atividades 7 e 8)",
+      criadoEm: new Date().toISOString(), atualizadoEm: new Date().toISOString(),
+      data: seedCOGERH()
+    }]
+  };
+  persistir();
+}
+
+/* ---------------- cabeçalho / metadados ---------------- */
+function renderMeta() {
+  const m = dados().meta;
+  $("metaOrg").value = m.org || "";
+  $("metaTitulo").value = m.titulo || "";
+  $("metaDocente").value = m.docente || "";
+  $("metaEquipe").value = m.equipe || "";
+}
+function renderChip() {
+  const c = cenAtual();
+  $("cenNome").textContent = c.nome;
+  $("cenData").textContent = "Criado em " + fmtData(c.criadoEm) + " • Atualizado em " + fmtData(c.atualizadoEm);
+}
+function renderSelects() {
+  const ops = dados().objetivos;
+  const opt = o => `<option value="${esc(o.id)}">${esc(o.codigo)} — ${esc((o.tituloCurto || "").slice(0, 58))}</option>`;
+  $("selOrigem").innerHTML = '<option value="">— selecione —</option>' + ops.map(opt).join("");
+  $("selDestino").innerHTML = '<option value="">— selecione —</option>' + ops.map(opt).join("");
+  $("oePerspectiva").innerHTML = PERSPECTIVAS.map(p => `<option value="${p.key}">${esc(p.nome)}</option>`).join("");
+  $("oeQuadrante").innerHTML = '<option value="">Sem vínculo com a matriz SWOT</option>' +
+    QUADRANTES.map(q => `<option value="${q.key}">${esc(q.nome)} (${esc(q.estilo)})</option>`).join("");
+}
+
+/* ---------------- render geral ---------------- */
+function renderTudo() {
+  garantirOrdem();
+  renderMeta(); renderChip(); renderSelects();
+  renderSWOT(); renderCruzamentos(); renderTabelaConex();
+  renderMapa(); renderLista(); renderDetalhe();
+}
+
+/* ---------------- navegação por abas ---------------- */
+function irPara(tab) {
+  document.querySelectorAll(".tab").forEach(b => b.classList.toggle("active", b.dataset.tab === tab));
+  document.querySelectorAll(".tabpane").forEach(p => p.classList.toggle("active", p.id === "tab-" + tab));
+  if (tab === "mapa") renderMapa();
+}
+
+/* ---------------- exportação JSON ---------------- */
+function baixar(nome, conteudo, mime) {
+  const blob = new Blob([conteudo], { type: mime || "application/octet-stream" });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement("a");
+  a.href = url; a.download = nome;
+  document.body.appendChild(a); a.click();
+  setTimeout(() => { document.body.removeChild(a); URL.revokeObjectURL(url); }, 400);
+}
+function exportarJson() {
+  const c = cenAtual();
+  const payload = {
+    schemaVersion: SCHEMA_VERSION,
+    exportadoEm: new Date().toISOString(),
+    cenario: { nome: c.nome, criadoEm: c.criadoEm, atualizadoEm: c.atualizadoEm },
+    projeto: JSON.parse(JSON.stringify(c.data))
+  };
+  const slug = (c.data.meta.org || "mapa").toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "").slice(0, 40);
+  baixar("mapa-estrategico-" + slug + ".json", JSON.stringify(payload, null, 2), "application/json");
+  toast("JSON exportado.");
+}
+function importarJson(file) {
+  const rd = new FileReader();
+  rd.onload = () => {
+    try {
+      const p = JSON.parse(rd.result);
+      const proj = p.projeto || p.data || p;               /* aceita pacote de export ou projeto cru */
+      if (!proj || !Array.isArray(proj.objetivos)) throw new Error("Estrutura inválida: campo 'objetivos' ausente.");
+      const id = uid("cen");
+      const nome = (p.cenario && p.cenario.nome) || proj.meta && proj.meta.org || "Cenário importado";
+      DB.cenarios.push({
+        id, nome: nome + " (importado)",
+        criadoEm: new Date().toISOString(), atualizadoEm: new Date().toISOString(),
+        data: migrarShapes({ cenarios: [{ data: proj }] }).cenarios[0].data
+      });
+      DB.currentId = id;
+      persistir(); renderTudo();
+      toast("JSON importado como novo cenário.");
+    } catch (e) {
+      toast("Falha ao importar: " + e.message);
+    }
+  };
+  rd.readAsText(file);
+}
+
+/* ---------------- exportação PNG (SVG nativo serializado) ---------------- */
+function exportarPng() {
+  const svg = document.querySelector("#svgHolder svg");
+  if (!svg) { toast("Nada para exportar."); return; }
+  const clone = svg.cloneNode(true);
+  const vb = (svg.getAttribute("viewBox") || "0 0 1200 700").split(/\s+/).map(Number);
+  const W = vb[2], H = vb[3], pad = 28;
+  clone.setAttribute("width", W + pad * 2);
+  clone.setAttribute("height", H + pad * 2);
+  clone.setAttribute("viewBox", `-${pad} -${pad} ${W + pad * 2} ${H + pad * 2}`);
+  clone.setAttribute("xmlns", "http://www.w3.org/2000/svg");
+  /* injeta a folha de estilo no clone: o SVG exportado fica autocontido */
+  const NS = "http://www.w3.org/2000/svg";
+  const folha = document.createElementNS(NS, "style");
+  folha.textContent = Array.from(document.querySelectorAll("style")).map(s => s.textContent).join("\n");
+  clone.insertBefore(folha, clone.firstChild);
+  const fundo = document.createElementNS("http://www.w3.org/2000/svg", "rect");
+  fundo.setAttribute("x", -pad); fundo.setAttribute("y", -pad);
+  fundo.setAttribute("width", W + pad * 2); fundo.setAttribute("height", H + pad * 2);
+  fundo.setAttribute("fill", "#ffffff");
+  clone.insertBefore(fundo, clone.firstChild);
+
+  const str = new XMLSerializer().serializeToString(clone);
+  const svgUrl = "data:image/svg+xml;charset=utf-8," + encodeURIComponent(str);
+  const img = new Image();
+  img.onload = () => {
+    const escala = 2;
+    const cv = document.createElement("canvas");
+    cv.width = (W + pad * 2) * escala; cv.height = (H + pad * 2) * escala;
+    const ctx = cv.getContext("2d");
+    ctx.fillStyle = "#ffffff";
+    ctx.fillRect(0, 0, cv.width, cv.height);
+    ctx.drawImage(img, 0, 0, cv.width, cv.height);
+    try {
+      cv.toBlob(b => {
+        if (!b) { toast("Falha ao gerar o PNG."); return; }
+        const url = URL.createObjectURL(b);
+        const a = document.createElement("a");
+        a.href = url; a.download = "mapa-estrategico.png";
+        document.body.appendChild(a); a.click();
+        setTimeout(() => { document.body.removeChild(a); URL.revokeObjectURL(url); }, 400);
+        toast("PNG gerado (2× de resolução).");
+      }, "image/png");
+    } catch (e) { toast("Falha ao gerar o PNG: " + e.message); }
+  };
+  img.onerror = () => toast("Falha ao renderizar o SVG como imagem.");
+  img.src = svgUrl;
+}
+
+/* ---------------- cenários ---------------- */
+function renderCenarios() {
+  const box = $("listaCenarios");
+  box.innerHTML = DB.cenarios.map(c => {
+    const atual = c.id === DB.currentId;
+    return `<div class="cen-row ${atual ? "atual" : ""}">
+      <div class="info">
+        <b>${esc(c.nome)} ${atual ? '<span class="badge ok">ativo</span>' : ""}</b>
+        <small>${esc(c.data.meta.org || "—")} • ${c.data.objetivos.length} objetivo(s) • ${c.data.fatores.length} fator(es) • criado em ${fmtData(c.criadoEm)} • atualizado em ${fmtData(c.atualizadoEm)}</small>
+      </div>
+      ${atual ? "" : `<button class="btn small" data-cen-carregar="${esc(c.id)}">Carregar</button>`}
+      <button class="btn small" data-cen-renomear="${esc(c.id)}">Renomear</button>
+      <button class="btn small" data-cen-duplicar="${esc(c.id)}">Duplicar</button>
+      ${DB.cenarios.length > 1 ? `<button class="btn small danger" data-cen-excluir="${esc(c.id)}">Excluir</button>` : ""}
+    </div>`;
+  }).join("");
+}
+function criarCenario(nome, data) {
+  const id = uid("cen"), now = new Date().toISOString();
+  DB.cenarios.push({
+    id, nome: nome || "Cenário sem nome",
+    criadoEm: now, atualizadoEm: now,
+    data: data || estadoVazio(nome)
+  });
+  DB.currentId = id;
+  persistir(); renderTudo(); renderCenarios();
+}
+
+/* ---------------- ligações de interface ---------------- */
+function ligarUI() {
+  /* abas */
+  document.querySelectorAll(".tab").forEach(b => b.addEventListener("click", () => irPara(b.dataset.tab)));
+  /* modais */
+  document.querySelectorAll("[data-close]").forEach(b => b.addEventListener("click", () => fecharModal(b.dataset.close)));
+  document.querySelectorAll(".modal").forEach(m => m.addEventListener("click", e => { if (e.target === m) m.classList.remove("open"); }));
+
+  /* metadados */
+  ["metaOrg", "metaTitulo", "metaDocente", "metaEquipe"].forEach(id => {
+    $(id).addEventListener("input", () => {
+      const m = dados().meta;
+      if (id === "metaOrg") m.org = $(id).value;
+      if (id === "metaTitulo") m.titulo = $(id).value;
+      if (id === "metaDocente") m.docente = $(id).value;
+      if (id === "metaEquipe") m.equipe = $(id).value;
+      salvar();
+    });
+  });
+
+  /* barra superior */
+  $("btnExemplo").addEventListener("click", () => {
+    criarCenario("COGERH — Exemplo (Atividades 7 e 8)", seedCOGERH());
+    toast("Exemplo da COGERH carregado.");
+  });
+  $("btnNovo").addEventListener("click", () => {
+    const nome = prompt("Nome do novo mapa estratégico (organização):", "Nova Organização");
+    if (nome === null) return;
+    criarCenario(nome.trim() || "Nova Organização", estadoVazio(nome.trim() || "Nova Organização"));
+    toast("Mapa em branco criado.");
+  });
+  $("btnCenarios").addEventListener("click", () => { renderCenarios(); abrirModal("modalCenarios"); });
+  $("btnExportJson").addEventListener("click", exportarJson);
+  $("btnImportJson").addEventListener("click", () => $("fileImport").click());
+  $("fileImport").addEventListener("change", e => { if (e.target.files[0]) importarJson(e.target.files[0]); e.target.value = ""; });
+  $("btnPng").addEventListener("click", exportarPng);
+  $("btnPrint").addEventListener("click", () => window.print());
+  $("btnAjuda").addEventListener("click", () => abrirModal("modalAjuda"));
+  $("btnSalvarAgora").addEventListener("click", salvarAgora);
+
+  /* cenários */
+  $("btnCriarCen").addEventListener("click", () => {
+    const n = $("novoCenNome").value.trim();
+    if (!n) { toast("Informe o nome do cenário."); return; }
+    criarCenario(n, estadoVazio(n));
+    $("novoCenNome").value = "";
+    toast("Cenário criado.");
+  });
+  $("btnDuplicarCen").addEventListener("click", () => {
+    const c = cenAtual();
+    criarCenario(c.nome + " (cópia)", migrarShapes({ cenarios: [{ data: JSON.parse(JSON.stringify(c.data)) }] }).cenarios[0].data);
+    toast("Cenário duplicado.");
+  });
+  $("listaCenarios").addEventListener("click", e => {
+    const b = e.target.closest("button");
+    if (!b) return;
+    const car = b.dataset.cenCarregar, ren = b.dataset.cenRenomear, dup = b.dataset.cenDuplicar, ex = b.dataset.cenExcluir;
+    if (car) {
+      DB.currentId = car; persistir(); renderTudo(); renderCenarios(); toast("Cenário carregado.");
+    } else if (ren) {
+      const c = DB.cenarios.find(x => x.id === ren);
+      const n = prompt("Novo nome do cenário:", c.nome);
+      if (n !== null && n.trim()) { c.nome = n.trim(); persistir(); renderChip(); renderCenarios(); toast("Cenário renomeado."); }
+    } else if (dup) {
+      const c = DB.cenarios.find(x => x.id === dup);
+      criarCenario(c.nome + " (cópia)", migrarShapes({ cenarios: [{ data: JSON.parse(JSON.stringify(c.data)) }] }).cenarios[0].data);
+      toast("Cenário duplicado.");
+    } else if (ex) {
+      const c = DB.cenarios.find(x => x.id === ex);
+      if (!confirm(`Excluir o cenário "${c.nome}"? Esta ação não pode ser desfeita.`)) return;
+      DB.cenarios = DB.cenarios.filter(x => x.id !== ex);
+      if (DB.currentId === ex) DB.currentId = DB.cenarios[0].id;
+      persistir(); renderTudo(); renderCenarios(); toast("Cenário excluído.");
+    }
+  });
+
+  /* aviso ao fechar */
+  window.addEventListener("beforeunload", () => { clearTimeout(saveTimer); persistir(); });
+  document.addEventListener("keydown", e => {
+    if (e.key === "Escape") {
+      document.querySelectorAll(".modal.open").forEach(m => m.classList.remove("open"));
+      if (UI.modo) alternarModo(false);
+      if (e.target.tagName === "INPUT" || e.target.tagName === "TEXTAREA") return;
+      UI.selectedId = null; renderMapa(); renderDetalhe();
+    }
+  });
+}
+/* ============================================================
+   P4 — MÓDULO 2A: CADASTRO DE FATORES SWOT (com pesos%)
+   ============================================================ */
+
+function somaPesos(t) {
+  return dados().fatores.filter(f => f.tipo === t).reduce((a, b) => a + (Number(b.peso) || 0), 0);
+}
+function fatorCurto(f) {
+  const txt = String(f.texto || "");
+  return txt.length > 120 ? txt.slice(0, 118).trim() + "…" : txt;
+}
+
+function renderSWOT() {
+  const g = $("swotGrid");
+  g.innerHTML = TIPOS.map(t => {
+    const items = dados().fatores.filter(f => f.tipo === t.key);
+    const soma = somaPesos(t.key);
+    const fechado = items.length === 0 || Math.abs(soma - 100) < 0.01;
+    return `
+    <section class="swot-card ${t.classe}">
+      <header>
+        <h3>${esc(t.nome)} <span style="opacity:.75;font-weight:600">(${esc(t.key)})</span></h3>
+        <span class="peso" id="soma-${esc(t.key)}" style="background:${fechado ? "rgba(255,255,255,.22)" : "rgba(127,29,29,.85)"}">
+          ${soma}% ${fechado ? "✓" : "≠ 100%"}
+        </span>
+      </header>
+      <div class="body">
+        ${items.length ? items.map(f => `
+          <div class="fator" data-fid="${esc(f.id)}">
+            <span class="cod">${esc(f.codigo || t.key)}</span>
+            <div style="flex:1">
+              <div class="txt" style="display:none">${esc(f.texto)}</div>
+              <textarea data-edit="texto" data-fid="${esc(f.id)}" rows="2">${esc(f.texto)}</textarea>
+            </div>
+            <div style="display:flex;flex-direction:column;gap:5px;align-items:flex-end">
+              <div style="display:flex;gap:4px;align-items:center">
+                <input class="pw-in" type="number" min="0" max="100" step="1" value="${Number(f.peso) || 0}"
+                       data-edit="peso" data-fid="${esc(f.id)}" title="Peso (%)" />
+                <span class="pw">%</span>
+              </div>
+              <div class="fator-actions">
+                <button class="iconbtn del" data-del-fator="${esc(f.id)}" title="Remover fator">✕</button>
+              </div>
+            </div>
+          </div>`).join("") : '<p class="empty">Nenhum fator cadastrado. Use a caixa abaixo para adicionar.</p>'}
+        <div class="addbox">
+          <textarea data-novo-texto="${esc(t.key)}" rows="2" placeholder="Descreva o novo fator de ${esc(t.nome)}…"></textarea>
+          <div class="row">
+            <div class="field" style="width:96px"><span>Peso (%)</span><input type="number" min="0" max="100" step="1" value="0" data-novo-peso="${esc(t.key)}" /></div>
+            <button class="btn small primary" data-add-fator="${esc(t.key)}">+ Adicionar ${esc(t.nome)}</button>
+          </div>
+        </div>
+      </div>
+    </section>`;
+  }).join("");
+}
+
+function atualizarSomasSWOT() {
+  TIPOS.forEach(t => {
+    const el = $("soma-" + t.key);
+    if (!el) return;
+    const items = dados().fatores.filter(f => f.tipo === t.key);
+    const soma = somaPesos(t.key);
+    const fechado = items.length === 0 || Math.abs(soma - 100) < 0.01;
+    el.textContent = soma + "% " + (fechado ? "✓" : "≠ 100%");
+    el.style.background = fechado ? "rgba(255,255,255,.22)" : "rgba(127,29,29,.85)";
+  });
+}
+
+function ligarSWOT() {
+  const g = $("swotGrid");
+
+  g.addEventListener("input", e => {
+    const t = e.target;
+    const fid = t.dataset.fid, campo = t.dataset.edit;
+    if (fid && campo) {
+      const f = fatorById(fid);
+      if (!f) return;
+      if (campo === "texto") f.texto = t.value;
+      if (campo === "peso") f.peso = Math.max(0, Math.min(100, Number(t.value) || 0));
+      atualizarSomasSWOT();
+      salvar();
+      if (campo === "texto") { renderDetalhe(); }
+      return;
+    }
+    if (t.dataset.novoTexto) { /* nada a persistir enquanto digita */ }
+  });
+
+  g.addEventListener("change", e => {
+    if (e.target.dataset.edit === "peso") { renderSWOT(); }
+  });
+
+  g.addEventListener("click", e => {
+    const b = e.target.closest("button");
+    if (!b) return;
+
+    if (b.dataset.addFator) {
+      const t = b.dataset.addFator;
+      const ta = g.querySelector(`[data-novo-texto="${t}"]`);
+      const pin = g.querySelector(`[data-novo-peso="${t}"]`);
+      const texto = (ta.value || "").trim();
+      if (!texto) { toast("Descreva o fator antes de adicionar."); return; }
+      const novo = {
+        id: uid("fat"), tipo: t, texto,
+        peso: Math.max(0, Math.min(100, Number(pin.value) || 0)),
+        codigo: proximoCodigoFator(t)
+      };
+      dados().fatores.push(novo);
+      salvar("Fator " + novo.codigo + " adicionado.");
+      renderSWOT(); renderCruzamentos(); renderSelects(); renderDetalhe();
+      return;
+    }
+
+    if (b.dataset.delFator) {
+      const fid = b.dataset.delFator;
+      const f = fatorById(fid);
+      if (!f) return;
+      if (!confirm(`Remover o fator ${f.codigo} de ${tipo(f.tipo).nome}?`)) return;
+      const d = dados();
+      d.fatores = d.fatores.filter(x => x.id !== fid);
+      /* limpa referências nos cruzamentos */
+      d.objetivos.forEach(o => {
+        if (o.swotOrigem && o.swotOrigem.fatores) {
+          o.swotOrigem.fatores = o.swotOrigem.fatores.filter(x => x !== fid);
+        }
+      });
+      /* recodifica dentro do tipo */
+      d.fatores.filter(x => x.tipo === f.tipo).forEach((x, i) => { x.codigo = x.tipo + (i + 1); });
+      salvar("Fator removido.");
+      renderSWOT(); renderCruzamentos(); renderSelects(); renderDetalhe(); renderMapa();
+      return;
+    }
+  });
+
+  $("btnResetPesos").addEventListener("click", () => {
+    const d = dados();
+    if (!d.fatores.length) { toast("Nenhum fator cadastrado."); return; }
+    if (!confirm("Redistribuir os pesos em partes iguais dentro de cada quadrante?")) return;
+    TIPOS.forEach(t => {
+      const items = d.fatores.filter(f => f.tipo === t.key);
+      if (!items.length) return;
+      const base = Math.floor((100 / items.length) * 100) / 100;
+      let acumulado = 0;
+      items.forEach((f, i) => {
+        if (i === items.length - 1) f.peso = Math.round((100 - acumulado) * 100) / 100;
+        else { f.peso = base; acumulado += base; }
+      });
+    });
+    salvar("Pesos redistribuídos.");
+    renderSWOT(); renderDetalhe();
+  });
+}
+/* ============================================================
+   P5 — MÓDULO 2B: MATRIZ DE CRUZAMENTO SWOT → OBJETIVOS
+   ============================================================ */
+
+function descreverOrigem(o) {
+  const q = (o.swotOrigem && o.swotOrigem.quadrante) ? QUAD_BY_KEY[o.swotOrigem.quadrante] : null;
+  if (!q) return "Objetivo sem vínculo com a matriz SWOT — criado diretamente no mapa.";
+  const fs = (o.swotOrigem.fatores || []).map(fatorById).filter(Boolean);
+  const lista = fs.length
+    ? fs.map(f => `${f.codigo} (${tipo(f.tipo).nome.replace(/s$/, "").toLowerCase()}, ${f.peso}%)`).join("; ")
+    : "nenhum fator marcado";
+  return `Gerado pelo confronto ${q.nome} [${q.estilo}] — fatores: ${lista}.`;
+}
+
+function chipFator(f, marcado, extra) {
+  return `<label class="chip ${marcado ? "sel" : ""}">
+    <input type="checkbox" ${marcado ? "checked" : ""} ${extra} data-fid="${esc(f.id)}" />
+    <span style="font-weight:800;color:${tipo(f.tipo).cor}">${esc(f.codigo)}</span>
+    <span title="${esc(f.texto)}">${esc(fatorCurto(f))}</span>
+    <span style="opacity:.7">${Number(f.peso) || 0}%</span>
+  </label>`;
+}
+
+function renderCruzamentos() {
+  const d = dados();
+  const g = $("cruzGrid");
+
+  g.innerHTML = QUADRANTES.map(q => {
+    const itens = d.objetivos.filter(o => o.swotOrigem && o.swotOrigem.quadrante === q.key);
+    const chips = q.tipos
+      .map(t => d.fatores.filter(f => f.tipo === t)
+        .map(f => chipFator(f, false, `data-novo-fid="${esc(q.key)}"`)).join(""))
+      .join("");
+
+    const listaOE = itens.length ? itens.map(o => {
+      const p = persp(o.perspectiva);
+      const marcados = new Set(o.swotOrigem.fatores || []);
+      const chipRow = q.tipos.map(t => d.fatores.filter(f => f.tipo === t)
+        .map(f => chipFator(f, marcados.has(f.id), `data-oe-fid="${esc(o.id)}"`)).join("")).join("");
+      return `
+      <div class="oe-item" data-oid="${esc(o.id)}" style="border-left-color:${p.cor}">
+        <div class="top">
+          <input type="text" value="${esc(o.codigo)}" data-oe="codigo" data-oid="${esc(o.id)}" style="width:78px;font-weight:800" />
+          <select data-oe="perspectiva" data-oid="${esc(o.id)}" style="flex:1">
+            ${PERSPECTIVAS.map(pp => `<option value="${pp.key}" ${pp.key === o.perspectiva ? "selected" : ""}>${esc(pp.nome)}</option>`).join("")}
+          </select>
+          <button class="iconbtn del" data-del-oe="${esc(o.id)}" title="Excluir objetivo">✕</button>
+        </div>
+        <div class="field" style="margin-bottom:6px"><span>Título curto (card)</span>
+          <input type="text" value="${esc(o.tituloCurto)}" data-oe="tituloCurto" data-oid="${esc(o.id)}" /></div>
+        <div class="field"><span>Enunciado completo (ficha técnica)</span>
+          <textarea data-oe="enunciadoCompleto" data-oid="${esc(o.id)}" rows="3">${esc(o.enunciadoCompleto)}</textarea></div>
+        <div class="field" style="margin-top:6px"><span>Fatores cruzados</span>
+          <div class="chips">${chipRow || '<span class="hint">Cadastre fatores na aba Matriz SWOT.</span>'}</div></div>
+        <div class="origem">${esc(descreverOrigem(o))}</div>
+      </div>`;
+    }).join("") : '<p class="empty">Nenhum objetivo neste quadrante ainda.</p>';
+
+    return `
+    <section class="cruz-card" data-qk="${esc(q.key)}">
+      <header>
+        <h3>${esc(q.nome)}<span class="est">${esc(q.estilo)}</span></h3>
+        <p>${esc(q.sentido)}</p>
+      </header>
+      <div class="body">
+        <div class="field"><span>Fatores confrontados neste quadrante</span>
+          <div class="chips">${chips || '<span class="hint">Sem fatores deste tipo cadastrados.</span>'}</div></div>
+        <div class="field"><span>Objetivos gerados (${itens.length})</span></div>
+        ${listaOE}
+        <div class="form-add">
+          <h4>Novo objetivo neste cruzamento</h4>
+          <div class="row">
+            <div class="field" style="width:92px"><span>Código</span><input type="text" value="${esc(proximoCodigoOE())}" data-new="codigo" data-new-qk="${esc(q.key)}" /></div>
+            <div class="field grow"><span>Perspectiva BSC</span>
+              <select data-new="perspectiva" data-new-qk="${esc(q.key)}">
+                ${PERSPECTIVAS.map(pp => `<option value="${pp.key}" ${q.key === "OF" && pp.key === "FIN" ? "selected" : ""}>${esc(pp.nome)}</option>`).join("")}
+              </select></div>
+          </div>
+          <div class="field"><span>Título curto (card)</span><input type="text" data-new="curto" data-new-qk="${esc(q.key)}" placeholder="Texto sucinto que aparecerá no card do mapa" /></div>
+          <div class="field"><span>Enunciado completo (ficha técnica)</span><textarea data-new="longo" data-new-qk="${esc(q.key)}" rows="2" placeholder="Enunciado completo do objetivo estratégico"></textarea></div>
+          <div><button class="btn small primary" data-add-oe="${esc(q.key)}">+ Criar objetivo</button></div>
+        </div>
+      </div>
+    </section>`;
+  }).join("");
+
+  const total = d.objetivos.length;
+  $("cruzResumo").textContent = total + " objetivo" + (total === 1 ? "" : "s");
+  $("cruzResumo").className = "badge ok";
+}
+
+function ligarCruzamentos() {
+  const g = $("cruzGrid");
+
+  /* edição de texto e código, sem re-render (preserva foco) */
+  g.addEventListener("input", e => {
+    const t = e.target;
+    const oid = t.dataset.oid, campo = t.dataset.oe;
+    if (!oid || !campo) return;
+    const o = objById(oid); if (!o) return;
+    o[campo] = t.value;
+    salvar();
+    if (campo !== "codigo") { renderMapa(); renderLista(); }
+  });
+
+  /* mudança de perspectiva (re-render completo: muda a raia) */
+  g.addEventListener("change", e => {
+    const t = e.target;
+    if (t.dataset.oe !== "perspectiva") return;
+    const o = objById(t.dataset.oid); if (!o) return;
+    o.perspectiva = t.value;
+    garantirOrdem();
+    salvar("Objetivo movido para " + persp(o.perspectiva).nome + ".");
+    renderCruzamentos(); renderMapa(); renderLista(); renderDetalhe(); renderSelects();
+  });
+
+  /* marcar/desmarcar fatores vinculados a um OE, ou selecionar para o novo */
+  g.addEventListener("change", e => {
+    const t = e.target;
+    if (!(t instanceof HTMLInputElement) || t.type !== "checkbox" || !t.dataset.fid) return;
+
+    const oid = t.dataset.oeFid;
+    if (oid) {
+      const o = objById(oid); if (!o) return;
+      const fid = t.dataset.fid;
+      const arr = o.swotOrigem.fatores = o.swotOrigem.fatores || [];
+      if (t.checked) { if (!arr.includes(fid)) arr.push(fid); }
+      else { o.swotOrigem.fatores = arr.filter(x => x !== fid); }
+      salvar();
+      const row = g.querySelector(`.oe-item[data-oid="${oid}"] .origem`);
+      if (row) row.textContent = descreverOrigem(o);
+      renderDetalhe();
+      return;
+    }
+    /* seleção para o novo objetivo — apenas visual */
+    const lbl = t.closest(".chip");
+    if (lbl) lbl.classList.toggle("sel", t.checked);
+  });
+
+  g.addEventListener("click", e => {
+    const b = e.target.closest("button");
+    if (!b) return;
+
+    if (b.dataset.addOe) {
+      const qk = b.dataset.addOe;
+      const card = g.querySelector(`.cruz-card[data-qk="${qk}"]`);
+      const get = k => card.querySelector(`[data-new="${k}"]`);
+      const curto = get("curto").value.trim();
+      const longo = get("longo").value.trim();
+      if (!curto && !longo) { toast("Informe o título curto do objetivo."); return; }
+      const sel = Array.from(card.querySelectorAll(`[data-novo-fid="${qk}"]:checked`)).map(x => x.dataset.fid);
+      const o = {
+        id: uid("obj"),
+        codigo: get("codigo").value.trim() || proximoCodigoOE(),
+        perspectiva: get("perspectiva").value,
+        tituloCurto: curto || longo.slice(0, 110),
+        enunciadoCompleto: longo || curto,
+        swotOrigem: { quadrante: qk, fatores: sel }
+      };
+      dados().objetivos.push(o);
+      garantirOrdem();
+      salvar("Objetivo " + o.codigo + " criado.");
+      renderCruzamentos(); renderMapa(); renderLista(); renderDetalhe(); renderSelects(); renderTabelaConex();
+      return;
+    }
+
+    if (b.dataset.delOe) {
+      const oid = b.dataset.delOe;
+      const o = objById(oid); if (!o) return;
+      const nConex = dados().conexoes.filter(c => c.de === oid || c.para === oid).length;
+      const aviso = nConex ? `\n\nAtenção: ${nConex} conexão(ões) de causa e efeito serão removidas.` : "";
+      if (!confirm(`Excluir o objetivo ${o.codigo}?${aviso}`)) return;
+      const d = dados();
+      d.objetivos = d.objetivos.filter(x => x.id !== oid);
+      d.conexoes = d.conexoes.filter(c => c.de !== oid && c.para !== oid);
+      PERSP_ORDER.forEach(k => { d.ordemPorPerspectiva[k] = d.ordemPorPerspectiva[k].filter(x => x !== oid); });
+      if (UI.selectedId === oid) UI.selectedId = null;
+      salvar("Objetivo excluído.");
+      renderCruzamentos(); renderMapa(); renderLista(); renderDetalhe(); renderSelects(); renderTabelaConex();
+      return;
+    }
+  });
+}
+/* ============================================================
+   P6 — MÓDULO 3: EDITOR VISUAL E CONECTOR DE CAUSALIDADE BSC
+   Renderização SVG nativa e AUTOCONTIDA: toda a aparência vai em
+   atributos de apresentação (não em CSS), para que a exportação
+   em PNG serialize o desenho sem depender de folha de estilo.
+   ============================================================ */
+
+/* CSS do diagrama — apenas estados/realces que não afetam geometria */
+document.head.insertAdjacentHTML("beforeend", `<style>
+.svg-card{cursor:grab}
+.svg-card.dragging{opacity:.42}
+.svg-card.is-dim{opacity:.13}
+.svg-card.is-dim .svg-edge{}
+.svg-edge.is-dim{opacity:.07}
+.dropzone{fill:rgba(79,70,229,.07);stroke:#818cf8;stroke-dasharray:6 4;stroke-width:1.5}
+.lane-add{cursor:pointer}
+.lane-add:hover rect{fill:#4338ca}
+</style>`);
+
+/* dimensões e constantes de layout */
+const CARD_W = 226, CARD_H = 128, GAP_C = 20, LABEL_W = 200,
+  LANE_PAD = 26, LANE_BAND = 34, TOP_PAD = 96, BOT_PAD = 78,
+  LANE_GAP = 16, COL_GAP = 26, MAX_PER_ROW = 6;
+
+const FONT = "'Segoe UI',Roboto,Helvetica,Arial,sans-serif";
+const CARD_TAG = { FIN: "Econômico-Financeiro", CLI: "Clientes e Mercado", PRO: "Processos e Tecnologia", PES: "Pessoas" };
+const COR_SET_FUNDO = "#94a3b8", COR_SET_DEST = "#4f46e5", COR_SALTO = "#d97706";
+
+let layoutCache = null;
+
+/* ---------- quebra de texto ---------- */
+function wrapTexto(txt, maxChars, maxLines) {
+  const raw = String(txt || "");
+  const words = raw.split(/\s+/).filter(Boolean);
+  const lines = []; let cur = "";
+  for (const w of words) {
+    if (lines.length >= maxLines) break;
+    const cand = (cur ? cur + " " : "") + w;
+    if (cand.length <= maxChars) cur = cand;
+    else { if (cur) lines.push(cur); cur = w; }
+  }
+  if (cur && lines.length < maxLines) lines.push(cur);
+  const usados = lines.join(" ").length;
+  if (lines.length && raw.trim().length > usados) {
+    const i = lines.length - 1;
+    lines[i] = (lines[i].length > maxChars - 1 ? lines[i].slice(0, maxChars - 1) : lines[i]) + "\u2026";
+  }
+  return lines.length ? lines : [""];
+}
+
+/* ---------- construtor de atributos de texto (autocontido) ---------- */
+function txt(x, y, conteudo, o) {
+  o = o || {};
+  const a = [
+    `x="${x}"`, `y="${y}"`,
+    `font-family="${FONT}"`,
+    `font-size="${o.size || 11}"`,
+    `font-weight="${o.weight || 400}"`,
+    `fill="${o.fill || "#334155"}"`
+  ];
+  if (o.anchor) a.push(`text-anchor="${o.anchor}"`);
+  if (o.opacity != null) a.push(`opacity="${o.opacity}"`);
+  if (o.fillOpacity != null) a.push(`fill-opacity="${o.fillOpacity}"`);
+  if (o.attrs) a.push(o.attrs);
+  return `<text ${a.join(" ")}>${esc(conteudo)}</text>`;
+}
+
+/* ---------- layout ---------- */
+function computeLayout() {
+  const d = dados();
+  const counts = PERSP_ORDER.map(k => (d.ordemPorPerspectiva[k] || []).length);
+  const maxCards = Math.max(1, ...counts);
+  const cols = Math.min(maxCards, MAX_PER_ROW);
+  const laneContentW = cols * (CARD_W + COL_GAP) - COL_GAP;
+  const W = LABEL_W + LANE_PAD * 2 + laneContentW;
+
+  const lanes = {}; const cards = {};
+  let y = TOP_PAD;
+  PERSP_ORDER.forEach(k => {
+    const ids = d.ordemPorPerspectiva[k] || [];
+    const rows = Math.max(1, Math.ceil(ids.length / MAX_PER_ROW));
+    const h = LANE_BAND + rows * CARD_H + (rows - 1) * GAP_C + 46;
+    lanes[k] = { y, h, x: 0, w: W, contentX: LABEL_W + LANE_PAD, contentW: laneContentW };
+    ids.forEach((oid, i) => {
+      const row = Math.floor(i / MAX_PER_ROW);
+      const col = i % MAX_PER_ROW;
+      const inRow = Math.min(MAX_PER_ROW, ids.length - row * MAX_PER_ROW);
+      const rowW = inRow * (CARD_W + COL_GAP) - COL_GAP;
+      const off = (laneContentW - rowW) / 2;
+      cards[oid] = {
+        x: LABEL_W + LANE_PAD + off + col * (CARD_W + COL_GAP),
+        y: y + LANE_BAND + row * (CARD_H + GAP_C),
+        w: CARD_W, h: CARD_H, lane: k, row, col
+      };
+    });
+    y += h + LANE_GAP;
+  });
+  const H = y - LANE_GAP + BOT_PAD;
+  return { W, H, lanes, cards };
+}
+
+/* ---------- roteamento das setas ---------- */
+function caminhoAresta(src, dst) {
+  const sx = src.x + src.w / 2, sy = src.y + src.h;
+  const tx = dst.x + dst.w / 2, ty = dst.y;
+  if (src.lane === dst.lane) {
+    const dir = tx >= sx ? 1 : -1;
+    const dip = src.y + src.h + 30;
+    const a = sx + dir * Math.max(34, Math.abs(tx - sx) * 0.35);
+    const b = tx + dir * Math.max(34, Math.abs(tx - sx) * 0.35);
+    return `M ${sx} ${sy} C ${a} ${dip}, ${b} ${dip}, ${tx} ${ty}`;
+  }
+  const k = Math.max(26, Math.min(130, Math.abs(ty - sy) * 0.42));
+  return `M ${sx} ${sy} C ${sx} ${sy + k}, ${tx} ${ty - k}, ${tx} ${ty}`;
+}
+
+/* ---------- auditoria auxiliar ---------- */
+const NIVEL = { PES: 0, PRO: 1, CLI: 2, FIN: 3 };
+function saltoRuim(c) {
+  const a = objById(c.de), b = objById(c.para);
+  if (!a || !b) return false;
+  const n1 = NIVEL[a.perspectiva], n2 = NIVEL[b.perspectiva];
+  if (n1 == null || n2 == null) return false;
+  return (n2 - n1) > 1;
+}
+function arestasEmCiclo() {
+  const d = dados();
+  const adj = {}, cor = {}, set = new Set();
+  d.conexoes.forEach(c => { (adj[c.de] = adj[c.de] || []).push(c.para); });
+  function dfs(v, path, onPath) {
+    cor[v] = 1; onPath[v] = true; path.push(v);
+    (adj[v] || []).forEach(w => {
+      if (onPath[w]) {
+        const cyc = path.slice(path.indexOf(w)).concat(w);
+        for (let i = 0; i < cyc.length - 1; i++) {
+          const e = d.conexoes.find(c => c.de === cyc[i] && c.para === cyc[i + 1]);
+          if (e) set.add(e.id);
+        }
+      } else if (!cor[w]) dfs(w, path, onPath);
+    });
+    onPath[v] = false; path.pop(); cor[v] = 2;
+  }
+  d.objetivos.forEach(o => { if (!cor[o.id]) dfs(o.id, [], {}); });
+  return set;
+}
+function arestasRuins() {
+  const d = dados(); const seen = new Set(); const bad = [];
+  d.conexoes.forEach(c => {
+    if (c.de === c.para) { bad.push({ id: c.id, motivo: "laço no próprio objetivo" }); return; }
+    const k = c.de + ">" + c.para;
+    if (seen.has(k)) bad.push({ id: c.id, motivo: "conexão repetida" }); else seen.add(k);
+  });
+  return bad;
+}
+function eDirty(id) {
+  return arestasEmCiclo().has(id) || arestasRuins().some(b => b.id === id);
+}
+
+/* ---------- desenho ---------- */
+function renderMapa() {
+  const d = dados();
+  garantirOrdem();
+  const L = computeLayout();
+  UI.layout = L;
+  const m = d.meta || {};
+
+  const h = [];
+  h.push(`<svg viewBox="0 0 ${L.W} ${L.H}" width="${L.W}" height="${L.H}" xmlns="http://www.w3.org/2000/svg">`);
+  h.push(`<defs>
+    <marker id="ar-n" viewBox="0 0 10 10" refX="8.5" refY="5" markerWidth="6.5" markerHeight="6.5" orient="auto-start-reverse">
+      <path d="M 0 0 L 10 5 L 0 10 z" fill="${COR_SET_FUNDO}"/></marker>
+    <marker id="ar-d" viewBox="0 0 10 10" refX="8.5" refY="5" markerWidth="6.5" markerHeight="6.5" orient="auto-start-reverse">
+      <path d="M 0 0 L 10 5 L 0 10 z" fill="${COR_SALTO}"/></marker>
+    <marker id="ar-l" viewBox="0 0 10 10" refX="8.5" refY="5" markerWidth="7.5" markerHeight="7.5" orient="auto-start-reverse">
+      <path d="M 0 0 L 10 5 L 0 10 z" fill="${COR_SET_DEST}"/></marker>
+  </defs>`);
+
+  /* ---- faixas e rótulos das raias ---- */
+  PERSP_ORDER.forEach(k => {
+    const p = persp(k), ln = L.lanes[k];
+    h.push(`<rect x="0" y="${ln.y}" width="${L.W}" height="${ln.h}" fill="${p.suave}" opacity="0.55"/>`);
+    h.push(`<rect x="0" y="${ln.y}" width="${LABEL_W}" height="${ln.h}" fill="${p.cor}"/>`);
+    /* nome (até 3 linhas) */
+    const nome = wrapTexto(p.nome, 20, 3);
+    nome.forEach((t, i) => h.push(txt(LABEL_W / 2, ln.y + 26 + i * 15, t,
+      { size: 12.5, weight: 800, fill: "#ffffff", anchor: "middle" })));
+    /* subtítulo (até 3 linhas), abaixo do nome */
+    const sub = wrapTexto(p.sub, 25, 3);
+    sub.forEach((t, i) => h.push(txt(LABEL_W / 2, ln.y + 30 + nome.length * 15 + i * 11, t,
+      { size: 8.6, weight: 600, fill: "#ffffff", fillOpacity: 0.84, anchor: "middle" })));
+    /* seta de sentido (leitura de baixo para cima) */
+    h.push(`<path d="M ${LABEL_W - 22} ${ln.y + ln.h - 34} l 0 -18 l -6 7 M ${LABEL_W - 22} ${ln.y + ln.h - 52} l 0 18 l 6 -7"
+      stroke="#ffffff" stroke-opacity="0.8" stroke-width="2" fill="none" stroke-linecap="round"/>`);
+    /* botão + para criar objetivo na raia */
+    const bx = L.W - 40;
+    h.push(`<g class="lane-add" data-add-lane="${esc(k)}">
+      <rect x="${bx}" y="${ln.y + 8}" width="26" height="22" rx="7" fill="#4f46e5"/>
+      ${txt(bx + 13, ln.y + 24, "+", { size: 15, weight: 800, fill: "#ffffff", anchor: "middle" })}
+      <title>Adicionar objetivo em ${esc(p.nome)}</title></g>`);
+  });
+
+  /* ---- cabeçalho ---- */
+  h.push(txt(10, 27, m.titulo || "Mapa Estratégico", { size: 17, weight: 800, fill: "#0f172a" }));
+  h.push(txt(10, 47, m.org || "", { size: 11.5, weight: 600, fill: "#475569" }));
+  const l2 = [m.docente ? "Orientador: " + m.docente : "", m.equipe ? "Equipe: " + m.equipe : ""]
+    .filter(Boolean).join("   •   ");
+  if (l2) h.push(txt(10, 64, l2, { size: 11.5, weight: 600, fill: "#475569" }));
+  h.push(txt(10, 82, "Leitura de baixo para cima: Pessoas → Processos Internos e Tecnologia → Clientes e Mercado → Econômico-Financeiro",
+    { size: 10.5, weight: 600, fill: "#94a3b8" }));
+
+  /* ---- conexões ---- */
+  h.push('<g id="edgeLayer">');
+  d.conexoes.forEach(c => {
+    const src = L.cards[c.de], dst = L.cards[c.para];
+    if (!src || !dst) return;
+    const dirty = eDirty(c.id);
+    const cor = dirty ? COR_SALTO : COR_SET_FUNDO;
+    h.push(`<path class="svg-edge ${dirty ? "dirty" : ""}" data-de="${esc(c.de)}" data-para="${esc(c.para)}"
+      d="${caminhoAresta(src, dst)}" fill="none" stroke="${cor}" stroke-width="1.9" stroke-linecap="round"
+      ${dirty ? 'stroke-dasharray="7 5"' : ""} marker-end="url(#${dirty ? "ar-d" : "ar-n"})">
+      <title>${esc(codigoDe(c.de) + " → " + codigoDe(c.para) + (c.justificativa ? " • " + c.justificativa : ""))}</title></path>`);
+    if (UI.rotulos) {
+      const mx = (src.x + src.w / 2 + dst.x + dst.w / 2) / 2;
+      const my = (src.y + src.h + dst.y) / 2;
+      h.push(txt(mx, my, codigoDe(c.de) + "→" + codigoDe(c.para),
+        { size: 9, weight: 800, fill: "#4f46e5", anchor: "middle" }));
+    }
+  });
+  h.push('</g>');
+
+  /* ---- cards ---- */
+  const preds = new Set(), succs = new Set();
+  if (UI.selectedId) d.conexoes.forEach(c => {
+    if (c.para === UI.selectedId) preds.add(c.de);
+    if (c.de === UI.selectedId) succs.add(c.para);
+  });
+
+  h.push('<g id="cardLayer">');
+  PERSP_ORDER.forEach(k => {
+    const p = persp(k);
+    (d.ordemPorPerspectiva[k] || []).forEach(oid => {
+      const o = objById(oid); if (!o) return;
+      const r = L.cards[oid];
+      const linhas = wrapTexto(o.tituloCurto || o.enunciadoCompleto, 34, 4);
+      const sel = UI.selectedId === oid;
+      const ehPred = preds.has(oid), ehSucc = succs.has(oid);
+
+      let borda = p.borda, largura = 1.6;
+      if (ehPred) { borda = "#059669"; largura = 2.6; }
+      if (ehSucc) { borda = "#d97706"; largura = 2.6; }
+      if (sel) { borda = "#4f46e5"; largura = 2.8; }
+
+      const chipW = Math.max(42, String(o.codigo || "").length * 9 + 16);
+      const chipFill = sel ? "#4f46e5" : p.cor;
+
+      h.push(`<g class="svg-card" data-oid="${esc(oid)}" transform="translate(${r.x},${r.y})">`);
+      h.push(`<rect x="0" y="0" width="${CARD_W}" height="${CARD_H}" rx="11" fill="#ffffff" stroke="${borda}" stroke-width="${largura}"/>`);
+      h.push(`<path d="M 0 11 A 11 11 0 0 1 11 0 L ${CARD_W - 11} 0 A 11 11 0 0 1 ${CARD_W} 11 L ${CARD_W} 27 L 0 27 Z" fill="${p.cor}" opacity="0.13"/>`);
+      h.push(`<rect x="0" y="2" width="5" height="${CARD_H - 4}" rx="2.5" fill="${p.cor}"/>`);
+      if (UI.codigos) {
+        h.push(`<rect x="13" y="7" width="${chipW}" height="19" rx="6" fill="${chipFill}"/>`);
+        h.push(txt(13 + chipW / 2, 21, o.codigo, { size: 12.5, weight: 800, fill: "#ffffff", anchor: "middle" }));
+      }
+      h.push(txt(CARD_W - 12, 21, CARD_TAG[k] || p.curto,
+        { size: 8.8, weight: 800, fill: p.cor, anchor: "end", fillOpacity: 0.9 }));
+      linhas.forEach((t, i) => h.push(txt(14, 46 + i * 15, t, { size: 10.6, weight: 500, fill: "#334155" })));
+      const etiqueta = (o.swotOrigem && o.swotOrigem.quadrante)
+        ? "SWOT " + o.swotOrigem.quadrante + " • " + (o.swotOrigem.fatores || []).length + " fator(es)"
+        : "sem vínculo SWOT";
+      h.push(txt(14, CARD_H - 10, etiqueta, { size: 8.8, weight: 800, fill: "#94a3b8" }));
+      h.push(`<title>${esc(o.codigo + " — " + (o.enunciadoCompleto || o.tituloCurto))}</title>`);
+      h.push("</g>");
+    });
+  });
+  h.push('</g>');
+  h.push('<g id="dropLayer"></g>');
+
+  /* ---- legenda ---- */
+  const ly = L.H - 58, lw = Math.min(700, L.W - 20);
+  h.push(`<rect x="10" y="${ly}" width="${lw}" height="48" rx="10" fill="#f8fafc" stroke="#e2e8f0"/>`);
+  h.push(`<line x1="26" y1="${ly + 18}" x2="74" y2="${ly + 18}" stroke="${COR_SET_FUNDO}" stroke-width="1.9" marker-end="url(#ar-n)"/>`);
+  h.push(txt(84, ly + 22, "Fluxo de contribuição (baixo → cima)", { size: 10.5, weight: 600, fill: "#475569" }));
+  h.push(`<line x1="300" y1="${ly + 18}" x2="348" y2="${ly + 18}" stroke="${COR_SALTO}" stroke-width="1.9" stroke-dasharray="7 5" marker-end="url(#ar-d)"/>`);
+  h.push(txt(358, ly + 22, "Trajeto com salto ou repetição — revise", { size: 10.5, weight: 600, fill: "#475569" }));
+  h.push(`<rect x="26" y="${ly + 29}" width="14" height="12" rx="3" fill="#ffffff" stroke="#059669" stroke-width="2.4"/>`);
+  h.push(txt(48, ly + 39, "Antecedente", { size: 10.5, weight: 600, fill: "#475569" }));
+  h.push(`<rect x="152" y="${ly + 29}" width="14" height="12" rx="3" fill="#ffffff" stroke="#d97706" stroke-width="2.4"/>`);
+  h.push(txt(174, ly + 39, "Consequente", { size: 10.5, weight: 600, fill: "#475569" }));
+  h.push(`<rect x="300" y="${ly + 29}" width="14" height="12" rx="3" fill="#ffffff" stroke="#4f46e5" stroke-width="2.8"/>`);
+  h.push(txt(322, ly + 39, "Selecionado", { size: 10.5, weight: 600, fill: "#475569" }));
+  h.push(txt(440, ly + 39, `${d.objetivos.length} objetivos • ${d.conexoes.length} conexões`,
+    { size: 10.5, weight: 600, fill: "#94a3b8" }));
+
+  if (!d.objetivos.length) {
+    h.push(txt(L.W / 2, TOP_PAD + 130,
+      "Nenhum objetivo estratégico ainda — use o “+” de uma raia ou a aba Cruzamentos.",
+      { size: 14, weight: 600, fill: "#94a3b8", anchor: "middle" }));
+  }
+
+  h.push('</svg>');
+  $("svgHolder").innerHTML = h.join("");
+  $("modoHint").textContent = UI.modo
+    ? (UI.linkFrom ? "Modo conexão: clique no objetivo de DESTINO (ESC cancela)" : "Modo conexão: clique no objetivo de ORIGEM (ESC cancela)")
+    : "";
+  aplicarZoom();
+  aplicarDestaque(UI.selectedId);
+}
+
+function codigoDe(id) { const o = objById(id); return o ? o.codigo : "?"; }
+
+/* ---------- destaque de vizinhança (sem re-render) ---------- */
+function aplicarDestaque(id) {
+  const svg = $("svgHolder").querySelector("svg");
+  if (!svg) return;
+  const d = dados();
+  const preds = new Set(), succs = new Set();
+  if (id) d.conexoes.forEach(c => {
+    if (c.para === id) preds.add(c.de);
+    if (c.de === id) succs.add(c.para);
+  });
+  svg.querySelectorAll(".svg-card").forEach(g => {
+    const oid = g.dataset.oid;
+    g.classList.remove("is-dim", "dragging");
+    const box = g.querySelector("rect");
+    const o = objById(oid);
+    if (!box || !o) return;
+    const p = persp(o.perspectiva);
+    let borda = p.borda, largura = 1.6;
+    if (!id) { /* neutro */ }
+    else if (oid === id) { borda = "#4f46e5"; largura = 2.8; }
+    else if (preds.has(oid)) { borda = "#059669"; largura = 2.6; }
+    else if (succs.has(oid)) { borda = "#d97706"; largura = 2.6; }
+    else g.classList.add("is-dim");
+    box.setAttribute("stroke", borda);
+    box.setAttribute("stroke-width", largura);
+  });
+  svg.querySelectorAll(".svg-edge").forEach(p => {
+    const ok = id && (p.dataset.de === id || p.dataset.para === id);
+    const dirty = p.classList.contains("dirty");
+    p.classList.toggle("is-dim", !!id && !ok);
+    p.setAttribute("stroke", ok ? COR_SET_DEST : (dirty ? COR_SALTO : COR_SET_FUNDO));
+    p.setAttribute("stroke-width", ok ? 3.2 : 1.9);
+    p.setAttribute("marker-end", ok ? "url(#ar-l)" : (dirty ? "url(#ar-d)" : "url(#ar-n)"));
+  });
+}
+
+/* ---------- zoom ---------- */
+function aplicarZoom() {
+  const svg = $("svgHolder").querySelector("svg");
+  if (!svg || !UI.layout) return;
+  svg.setAttribute("width", UI.layout.W * UI.zoom);
+  svg.setAttribute("height", UI.layout.H * UI.zoom);
+  $("zoomLabel").textContent = Math.round(UI.zoom * 100) + "%";
+}
+function zoomFit() {
+  if (!UI.layout) return;
+  const disp = $("svgHolder").clientWidth - 6;
+  UI.zoom = Math.max(0.35, Math.min(1.6, disp / UI.layout.W));
+  aplicarZoom();
+}
+
+/* ---------- coordenadas e alvo de soltura ---------- */
+function toSvg(evt) {
+  const svg = $("svgHolder").querySelector("svg");
+  const pt = svg.createSVGPoint();
+  pt.x = evt.clientX; pt.y = evt.clientY;
+  return pt.matrixTransform(svg.getScreenCTM().inverse());
+}
+function alvoDrop(x, y, oid) {
+  const L = UI.layout; if (!L) return null;
+  let lane = null;
+  PERSP_ORDER.forEach(k => {
+    const ln = L.lanes[k];
+    if (y >= ln.y && y <= ln.y + ln.h) lane = k;
+  });
+  if (!lane) return null;
+  const lista = (dados().ordemPorPerspectiva[lane] || []).filter(id => id !== oid);
+  let idx = lista.length;
+  for (let i = 0; i < lista.length; i++) {
+    const c = L.cards[lista[i]];
+    if (c && x < c.x + c.w / 2) { idx = i; break; }
+  }
+  return { lane, index: idx };
+}
+function desenharDropTarget(alvo) {
+  const layer = $("svgHolder").querySelector("#dropLayer");
+  if (!layer) return;
+  if (!alvo) { layer.innerHTML = ""; return; }
+  const L = UI.layout, ln = L.lanes[alvo.lane];
+  const c = CARD_W + COL_GAP;
+  const x = LABEL_W + LANE_PAD + alvo.index * c - COL_GAP / 2;
+  layer.innerHTML = `<rect class="dropzone" x="${Math.max(LABEL_W + 4, x)}"
+    y="${ln.y + LANE_BAND - 4}" width="${CARD_W * 0.5}" height="${CARD_H}" rx="11"/>`;
+}
+function limparDropTarget() {
+  const layer = $("svgHolder").querySelector("#dropLayer");
+  if (layer) layer.innerHTML = "";
+}
+function moverObjetivo(oid, lane, index) {
+  const d = dados(), o = objById(oid);
+  if (!o) return;
+  PERSP_ORDER.forEach(k => { d.ordemPorPerspectiva[k] = (d.ordemPorPerspectiva[k] || []).filter(id => id !== oid); });
+  o.perspectiva = lane;
+  const arr = d.ordemPorPerspectiva[lane];
+  arr.splice(Math.max(0, Math.min(index, arr.length)), 0, oid);
+  garantirOrdem();
+  salvar("Objetivo " + o.codigo + " movido para " + persp(lane).nome + ".");
+  renderMapa(); renderLista(); renderCruzamentos(); renderDetalhe();
+}
+
+/* ---------- interações ---------- */
+function selecionar(id) {
+  UI.selectedId = id;
+  renderMapa(); renderDetalhe();
+}
+function alternarModo(forcar) {
+  UI.modo = (typeof forcar === "boolean") ? forcar : !UI.modo;
+  UI.linkFrom = null;
+  const b = $("btnModo");
+  b.classList.toggle("on", UI.modo);
+  b.textContent = "Modo conexão: " + (UI.modo ? "ON" : "OFF");
+  renderMapa();
+}
+function ligarMapa() {
+  const holder = $("svgHolder");
+  let dragState = null;
+
+  holder.addEventListener("mouseover", e => {
+    const card = e.target.closest(".svg-card");
+    if (!card || dragState) return;
+    aplicarDestaque(card.dataset.oid);
+    renderDetalhe(card.dataset.oid);
+  });
+  holder.addEventListener("mouseout", e => {
+    const card = e.target.closest(".svg-card");
+    if (!card || dragState) return;
+    const para = e.relatedTarget && e.relatedTarget.closest ? e.relatedTarget.closest(".svg-card") : null;
+    if (para) return;
+    aplicarDestaque(UI.selectedId);
+    renderDetalhe(UI.selectedId);
+  });
+
+  holder.addEventListener("click", e => {
+    const addLane = e.target.closest("[data-add-lane]");
+    if (addLane) { abrirModalOE(addLane.dataset.addLane); return; }
+
+    const card = e.target.closest(".svg-card");
+    if (!card) return;
+    if (dragState && dragState.moved) return;
+    const oid = card.dataset.oid;
+
+    if (UI.modo) {
+      if (!UI.linkFrom) {
+        UI.linkFrom = oid;
+        toast("Origem: " + codigoDe(oid) + ". Agora clique no destino.");
+        renderMapa();
+      } else if (UI.linkFrom === oid) {
+        UI.linkFrom = null; toast("Conexão cancelada."); renderMapa();
+      } else {
+        const de = UI.linkFrom, para = oid, d = dados();
+        if (d.conexoes.some(c => c.de === de && c.para === para)) toast("Essa conexão já existe.");
+        else {
+          d.conexoes.push({ id: uid("cx"), de, para, justificativa: "" });
+          salvar("Conexão criada: " + codigoDe(de) + " → " + codigoDe(para) + ".");
+          renderTabelaConex();
+        }
+        UI.linkFrom = null;
+        renderMapa();
+      }
+      return;
+    }
+    selecionar(oid === UI.selectedId ? null : oid);
+  });
+
+  holder.addEventListener("pointerdown", e => {
+    const card = e.target.closest(".svg-card");
+    if (!card || UI.modo || e.button !== 0) return;
+    dragState = { oid: card.dataset.oid, x0: e.clientX, y0: e.clientY, moved: false, alvo: null };
+    card.classList.add("dragging");
+    e.preventDefault();
+  });
+  window.addEventListener("pointermove", e => {
+    if (!dragState) return;
+    if (!dragState.moved &&
+      Math.abs(e.clientX - dragState.x0) + Math.abs(e.clientY - dragState.y0) > 6) dragState.moved = true;
+    if (!dragState.moved) return;
+    const pt = toSvg(e);
+    dragState.alvo = alvoDrop(pt.x, pt.y, dragState.oid);
+    desenharDropTarget(dragState.alvo);
+  });
+  window.addEventListener("pointerup", () => {
+    if (!dragState) return;
+    const st = dragState; dragState = null;
+    const el = holder.querySelector(`.svg-card[data-oid="${st.oid}"]`);
+    if (el) el.classList.remove("dragging");
+    limparDropTarget();
+    if (st.moved && st.alvo) moverObjetivo(st.oid, st.alvo.lane, st.alvo.index);
+  });
+
+  $("btnModo").addEventListener("click", () => alternarModo());
+  $("chkSetas").addEventListener("change", e => {
+    UI.setas = e.target.checked;
+    const l = $("svgHolder").querySelector("#edgeLayer");
+    if (l) l.style.display = UI.setas ? "" : "none";
+  });
+  $("chkCodigos").addEventListener("change", e => { UI.codigos = e.target.checked; renderMapa(); });
+  $("chkRotulos").addEventListener("change", e => { UI.rotulos = e.target.checked; renderMapa(); });
+  $("zoomIn").addEventListener("click", () => { UI.zoom = Math.min(2.4, UI.zoom + 0.12); aplicarZoom(); });
+  $("zoomOut").addEventListener("click", () => { UI.zoom = Math.max(0.35, UI.zoom - 0.12); aplicarZoom(); });
+  $("zoomFit").addEventListener("click", zoomFit);
+  $("btnAddOE").addEventListener("click", () => abrirModalOE(null));
+  window.addEventListener("resize", () => aplicarZoom());
+}
+/* ============================================================
+   P7 — MÓDULO 4: PAINÉIS DE AUDITORIA, LISTA, CONEXÕES E BOOT
+   ============================================================ */
+
+/* ---------- painel lateral: lista de objetivos ---------- */
+function renderLista() {
+  const d = dados();
+  $("listaTag").textContent = d.objetivos.length + " objetivo" + (d.objetivos.length === 1 ? "" : "s");
+  const blocos = PERSPECTIVAS.map(p => {
+    const ids = d.ordemPorPerspectiva[p.key] || [];
+    if (!ids.length) return "";
+    return `<div style="margin:2px 0 3px"><b style="font-size:10px;text-transform:uppercase;letter-spacing:.05em;color:${p.cor}">${esc(p.nome)} (${ids.length})</b></div>` +
+      ids.map(id => {
+        const o = objById(id); if (!o) return "";
+        const marca = UI.selectedId === id ? "border-color:#a5b4fc;background:#eef2ff" : "";
+        return `<div class="mini clic" data-sel="${esc(id)}" style="${marca}">
+          <span class="c" style="background:${p.cor}">${esc(o.codigo)}</span>
+          <span>${esc(o.tituloCurto)}</span></div>`;
+      }).join("");
+  }).join("");
+  $("painelLista").innerHTML = blocos || '<p class="empty">Nenhum objetivo cadastrado. Use “+ Novo objetivo” ou o “+” de uma raia.</p>';
+}
+
+/* ---------- painel lateral: ficha técnica ---------- */
+function renderDetalhe(idAlvo) {
+  const id = idAlvo !== undefined ? idAlvo : UI.selectedId;
+  const d = dados();
+  const box = $("painelDetalhe");
+
+  if (!id) {
+    $("detTag").textContent = "nenhum";
+    $("detTag").className = "badge neutro";
+    /* resumo de auditoria quando nada está selecionado */
+    const raiz = d.objetivos.filter(o => !d.conexoes.some(c => c.para === o.id));
+    const topo = d.objetivos.filter(o => !d.conexoes.some(c => c.de === o.id));
+    const orfaos = d.objetivos.filter(o => !d.conexoes.some(c => c.de === o.id || c.para === o.id));
+    const idsCiclo = arestasEmCiclo();
+    const ruins = arestasRuins();
+    const saltos = d.conexoes.filter(saltoRuim);
+    const qUsados = new Set(d.objetivos.map(o => o.swotOrigem && o.swotOrigem.quadrante).filter(Boolean));
+    const semVinculo = d.objetivos.filter(o => !o.swotOrigem || !o.swotOrigem.quadrante);
+    const somaOk = TIPOS.every(t => {
+      const it = d.fatores.filter(f => f.tipo === t.key);
+      return !it.length || Math.abs(somaPesos(t.key) - 100) < 0.01;
+    });
+
+    const linha = (rot, val, estado, extra) => `<div class="kv"><b>${rot}</b><span style="color:${estado === "ok" ? "#059669" : estado === "err" ? "#dc2626" : "#d97706"}">${val}</span></div>`;
+
+    box.innerHTML = `
+      <p class="hint" style="margin:0 0 4px">Auditoria do mapa — passe o mouse sobre um card ou clique nele para abrir a ficha técnica.</p>
+      ${linha("Objetivos / conexões", d.objetivos.length + " / " + d.conexoes.length, "ok")}
+      ${linha("Objetivos sem ligação", orfaos.length ? orfaos.map(o => o.codigo).join(", ") : "nenhum", orfaos.length ? "warn" : "ok")}
+      ${linha("Raiz (não recebe)", raiz.length ? raiz.map(o => o.codigo).join(", ") : "—", raiz.length === 1 ? "ok" : "warn")}
+      ${linha("Topo (não alimenta)", topo.length ? topo.map(o => o.codigo).join(", ") : "—", "ok")}
+      ${linha("Ciclos de causalidade", idsCiclo.size ? idsCiclo.size + " aresta(s) em ciclo" : "nenhum", idsCiclo.size ? "err" : "ok")}
+      ${linha("Conexões repetidas/lasso", ruins.length ? ruins.length : "nenhuma", ruins.length ? "err" : "ok")}
+      ${linha("Saltos de raia (>1 nível)", saltos.length ? saltos.length + " (sinalizadas)" : "nenhum", saltos.length ? "warn" : "ok")}
+      ${linha("Quadrantes SWOT cobertos", qUsados.size + " de 4", qUsados.size === 4 ? "ok" : "warn")}
+      ${linha("Objetivos sem vínculo SWOT", semVinculo.length ? semVinculo.map(o => o.codigo).join(", ") : "nenhum", semVinculo.length ? "warn" : "ok")}
+      ${linha("Pesos SWOT somando 100%", somaOk ? "sim" : "não — revise", somaOk ? "ok" : "err")}
+      <div style="margin-top:6px"><b style="font-size:10.5px;text-transform:uppercase;color:#64748b">Topo → Base (caminho mais longo)</b>
+        <div class="hint" style="margin-top:3px">${esc(caminhoMaisLongo())}</div></div>`;
+    return;
+  }
+
+  const o = objById(id);
+  if (!o) { $("painelDetalhe").innerHTML = '<p class="empty">Objetivo não encontrado.</p>'; return; }
+  const p = persp(o.perspectiva);
+  $("detTag").textContent = o.codigo;
+  $("detTag").className = "badge ok";
+
+  const preds = d.conexoes.filter(c => c.para === o.id).map(c => objById(c.de)).filter(Boolean);
+  const succs = d.conexoes.filter(c => c.de === o.id).map(c => objById(c.para)).filter(Boolean);
+  const fs = (o.swotOrigem.fatores || []).map(fatorById).filter(Boolean);
+
+  const miniObj = (lista, cor) => lista.length
+    ? `<div class="mini-list">${lista.map(x => `<div class="mini clic" data-sel="${esc(x.id)}">
+        <span class="c" style="background:${persp(x.perspectiva).cor}">${esc(x.codigo)}</span>
+        <span>${esc(x.tituloCurto)}</span></div>`).join("")}</div>`
+    : '<p class="empty">Nenhum.</p>';
+
+  const chipsFatores = fs.length
+    ? fs.map(f => `<span class="chip sel" title="${esc(f.texto)}" style="cursor:default">
+        <span style="font-weight:800;color:${tipo(f.tipo).cor}">${esc(f.codigo)}</span>
+        <span>${esc(fatorCurto(f).slice(0, 44))}</span>
+        <span style="opacity:.7">${Number(f.peso) || 0}%</span></span>`).join("")
+    : '<span class="hint">Objetivo sem vínculo com a matriz SWOT.</span>';
+
+  box.innerHTML = `
+    <div class="kv"><b>Perspectiva</b><span style="color:${p.cor}">${esc(p.nome)}</span></div>
+    <div class="kv"><b>Quadrante</b><span>${o.swotOrigem && o.swotOrigem.quadrante
+      ? esc(QUAD_BY_KEY[o.swotOrigem.quadrante].nome) + " [" + esc(QUAD_BY_KEY[o.swotOrigem.quadrante].estilo) + "]"
+      : "sem vínculo"}</span></div>
+    <div><b style="font-size:10.5px;text-transform:uppercase;color:#64748b">Enunciado completo</b>
+      <p style="margin:4px 0 0;font-size:12.5px;color:#334155">${esc(o.enunciadoCompleto)}</p></div>
+    <div><b style="font-size:10.5px;text-transform:uppercase;color:#64748b">Origem do cruzamento</b>
+      <p style="margin:4px 0 0;font-size:12px;color:#475569">${esc(descreverOrigem(o))}</p></div>
+    <div><b style="font-size:10.5px;text-transform:uppercase;color:#64748b">Fatores cruzados</b>
+      <div class="chips" style="margin-top:5px">${chipsFatores}</div></div>
+    <div><b style="font-size:10.5px;text-transform:uppercase;color:#64748b">Recebe suporte de (antecedentes)</b>${miniObj(preds)}</div>
+    <div><b style="font-size:10.5px;text-transform:uppercase;color:#64748b">Fornece suporte a (consequentes)</b>${miniObj(succs)}</div>
+    <div class="row">
+      <button class="btn small" data-ir-cruz="${esc(o.id)}">Editar no cruzamento</button>
+      <button class="btn small" data-conectar="${esc(o.id)}">Conectar a…</button>
+    </div>`;
+
+  if (fs.length) {
+    const cobertura = fs.reduce((a, f) => a + (Number(f.peso) || 0), 0);
+    box.insertAdjacentHTML("beforeend",
+      `<div class="hint">Massa diagnóstica coberta pelos fatores marcados: <b>${cobertura}%</b> — em relação aos 4 quadrantes (400%), representa ${Math.round(cobertura / 4)}%.</div>`);
+  }
+}
+
+/* caminho causal mais longo (em número de saltos) */
+function caminhoMaisLongo() {
+  const d = dados();
+  const memo = {};
+  function prof(id, pilha) {
+    if (memo[id] !== undefined) return memo[id];
+    if (pilha.has(id)) return 0;
+    pilha.add(id);
+    const prox = d.conexoes.filter(c => c.de === id).map(c => c.para);
+    let melhor = 1;
+    prox.forEach(p => { melhor = Math.max(melhor, 1 + prof(p, pilha)); });
+    pilha.delete(id);
+    memo[id] = melhor;
+    return melhor;
+  }
+  let melhorId = null, melhor = 0;
+  d.objetivos.forEach(o => { const v = prof(o.id, new Set()); if (v > melhor) { melhor = v; melhorId = o.id; } });
+  if (!melhorId) return "Sem cadeia causal definida.";
+  /* reconstrói o trajeto */
+  const trilha = []; let atual = melhorId;
+  for (let i = 0; i < 12; i++) {
+    trilha.push(codigoDe(atual));
+    const prox = d.conexoes.filter(c => c.de === atual).map(c => c.para);
+    if (!prox.length) break;
+    atual = prox.sort((a, b) => prof(b, new Set()) - prof(a, new Set()))[0];
+  }
+  return trilha.join(" → ") + "  (" + melhor + " níveis)";
+}
+
+/* ---------- tabela de conexões ---------- */
+function renderTabelaConex() {
+  const d = dados();
+  $("conexResumo").textContent = d.conexoes.length + " conexão" + (d.conexoes.length === 1 ? "" : "ões");
+  $("conexResumo").className = d.conexoes.length ? "badge ok" : "badge neutro";
+
+  if (!d.conexoes.length) {
+    $("tblConex").innerHTML = '<tbody><tr><td><p class="empty">Nenhuma conexão cadastrada. Use o formulário acima ou o Modo conexão no mapa.</p></td></tr></tbody>';
+    return;
+  }
+  const ciclos = arestasEmCiclo();
+  const ruins = arestasRuins();
+  const linhas = d.conexoes.map(c => {
+    const de = objById(c.de), para = objById(c.para);
+    if (!de || !para) return "";
+    const pd = persp(de.perspectiva), pp = persp(para.perspectiva);
+    const alertas = [];
+    if (ciclos.has(c.id)) alertas.push("ciclo");
+    const r = ruins.find(x => x.id === c.id); if (r) alertas.push(r.motivo);
+    if (saltoRuim(c)) alertas.push("salto de raia");
+    const tag = alertas.length
+      ? `<span class="badge err" style="background:#fef3c7;color:#92400e">⚠ ${esc(alertas.join(" / "))}</span>`
+      : '<span class="badge ok">ok</span>';
+    return `<tr>
+      <td><span class="pill" style="background:${pd.cor}">${esc(de.codigo)}</span> <span class="hint">${esc(pd.curto)}</span></td>
+      <td class="arrowcell">→</td>
+      <td><span class="pill" style="background:${pp.cor}">${esc(para.codigo)}</span> <span class="hint">${esc(pp.curto)}</span></td>
+      <td>${tag}</td>
+      <td><textarea data-just="${esc(c.id)}" rows="1" style="min-width:220px;min-height:32px">${esc(c.justificativa || "")}</textarea></td>
+      <td><button class="iconbtn del" data-del-cx="${esc(c.id)}" title="Excluir conexão">✕</button></td>
+    </tr>`;
+  }).join("");
+
+  $("tblConex").innerHTML = `<thead><tr>
+      <th style="width:20%">Origem (contribui)</th><th></th><th style="width:20%">Destino (recebe)</th>
+      <th style="width:17%">Auditoria</th><th>Justificativa da relação</th><th></th>
+    </tr></thead><tbody>${linhas}</tbody>`;
+}
+
+/* ---------- formulário de conexões ---------- */
+function ligarConexoes() {
+  $("btnAddConex").addEventListener("click", () => {
+    const de = $("selOrigem").value, para = $("selDestino").value;
+    if (!de || !para) { toast("Selecione origem e destino."); return; }
+    if (de === para) { toast("Origem e destino não podem ser o mesmo objetivo."); return; }
+    const d = dados();
+    if (d.conexoes.some(c => c.de === de && c.para === para)) { toast("Essa conexão já existe."); return; }
+    d.conexoes.push({ id: uid("cx"), de, para, justificativa: $("txtJust").value.trim() });
+    $("txtJust").value = ""; $("selOrigem").value = ""; $("selDestino").value = "";
+    salvar("Conexão criada: " + codigoDe(de) + " → " + codigoDe(para) + ".");
+    renderTabelaConex(); renderMapa(); renderDetalhe();
+  });
+
+  $("tblConex").addEventListener("click", e => {
+    const b = e.target.closest("[data-del-cx]");
+    if (!b) return;
+    const id = b.dataset.delCx;
+    const c = dados().conexoes.find(x => x.id === id);
+    if (!c) return;
+    if (!confirm(`Excluir a conexão ${codigoDe(c.de)} → ${codigoDe(c.para)}?`)) return;
+    dados().conexoes = dados().conexoes.filter(x => x.id !== id);
+    salvar("Conexão excluída.");
+    renderTabelaConex(); renderMapa(); renderDetalhe();
+  });
+
+  $("tblConex").addEventListener("change", e => {
+    const t = e.target;
+    if (!t.dataset.just) return;
+    const c = dados().conexoes.find(x => x.id === t.dataset.just);
+    if (c) { c.justificativa = t.value.trim(); salvar(); }
+  });
+}
+
+/* ---------- modal de novo objetivo ---------- */
+function abrirModalOE(perspectivaPreferida) {
+  const box = document.querySelector("#modalAddOE .body");
+  if (!$("oeFatores")) {
+    box.insertAdjacentHTML("beforeend",
+      '<div class="field"><span>Fatores SWOT cruzados (opcional)</span><div class="chips" id="oeFatores"></div></div>');
+    $("oeQuadrante").addEventListener("change", renderChipsModal);
+  }
+  $("oeCodigo").value = proximoCodigoOE();
+  $("oeCurto").value = "";
+  $("oeLongo").value = "";
+  $("oeQuadrante").value = "";
+  $("oePerspectiva").value = perspectivaPreferida || "FIN";
+  renderChipsModal();
+  abrirModal("modalAddOE");
+  setTimeout(() => $("oeCurto").focus(), 40);
+}
+function renderChipsModal() {
+  const qk = $("oeQuadrante").value;
+  const box = $("oeFatores");
+  if (!box) return;
+  if (!qk) { box.innerHTML = '<span class="hint">Escolha um quadrante para marcar os fatores cruzados.</span>'; return; }
+  const q = QUAD_BY_KEY[qk];
+  const chips = q.tipos.map(t => dados().fatores.filter(f => f.tipo === t.key)
+    .map(f => chipFator(f, false, `data-modal-fid="${esc(qk)}"`)).join("")).join("");
+  box.innerHTML = chips || '<span class="hint">Nenhum fator cadastrado para este quadrante.</span>';
+}
+function ligarModalOE() {
+  $("btnConfirmarOE").addEventListener("click", () => {
+    const curto = $("oeCurto").value.trim(), longo = $("oeLongo").value.trim();
+    if (!curto && !longo) { toast("Informe ao menos o título curto do objetivo."); return; }
+    const qk = $("oeQuadrante").value || null;
+    const fatores = qk
+      ? Array.from(document.querySelectorAll(`[data-modal-fid="${qk}"]:checked`)).map(x => x.dataset.fid)
+      : [];
+    const o = {
+      id: uid("obj"),
+      codigo: $("oeCodigo").value.trim() || proximoCodigoOE(),
+      perspectiva: $("oePerspectiva").value,
+      tituloCurto: curto || longo.slice(0, 110),
+      enunciadoCompleto: longo || curto,
+      swotOrigem: { quadrante: qk, fatores }
+    };
+    dados().objetivos.push(o);
+    garantirOrdem();
+    fecharModal("modalAddOE");
+    salvar("Objetivo " + o.codigo + " criado em " + persp(o.perspectiva).nome + ".");
+    renderCruzamentos(); renderMapa(); renderLista(); renderDetalhe(); renderSelects(); renderTabelaConex();
+    UI.selectedId = o.id; renderMapa(); renderDetalhe();
+  });
+}
+
+/* ---------- painel lateral: seleção e ações ---------- */
+function ligarPainel() {
+  $("painelLista").addEventListener("click", e => {
+    const b = e.target.closest("[data-sel]");
+    if (b) selecionar(b.dataset.sel);
+  });
+  $("painelDetalhe").addEventListener("click", e => {
+    const sel = e.target.closest("[data-sel]");
+    if (sel) { selecionar(sel.dataset.sel); return; }
+    const ir = e.target.closest("[data-ir-cruz]");
+    if (ir) {
+      const o = objById(ir.dataset.irCruz);
+      irPara("cruz");
+      setTimeout(() => {
+        const card = document.querySelector(`.cruz-card[data-qk="${o && o.swotOrigem ? o.swotOrigem.quadrante : ""}"]`);
+        const item = document.querySelector(`.oe-item[data-oid="${ir.dataset.irCruz}"]`);
+        (item || card) && (item || card).scrollIntoView({ behavior: "smooth", block: "center" });
+      }, 60);
+      return;
+    }
+    const con = e.target.closest("[data-conectar]");
+    if (con) {
+      UI.selectedId = con.dataset.conectar;
+      alternarModo(true);
+      UI.linkFrom = con.dataset.conectar;
+      irPara("mapa");
+      toast("Origem: " + codigoDe(con.dataset.conectar) + ". Clique no objetivo de destino.");
+    }
+  });
+}
+
+/* ---------- ajuda ---------- */
+function renderAjuda() {
+  $("ajudaBody").innerHTML = `
+    <p style="margin:0"><b>Fluxo de trabalho sugerido</b></p>
+    <ol style="margin:0;padding-left:20px;font-size:13px;color:#334155;line-height:1.6">
+      <li><b>Matriz SWOT</b> — cadastre os fatores e ajuste os pesos (cada quadrante deve somar 100%).</li>
+      <li><b>Cruzamentos</b> — em cada quadrante, marque os fatores confrontados e crie os objetivos estratégicos, escolhendo a perspectiva BSC.</li>
+      <li><b>Mapa Estratégico</b> — arraste os cards para reordenar dentro da raia ou solte-os em outra raia; use o <b>+</b> da raia para criar objetivos direto no local.</li>
+      <li><b>Conexões</b> — use o <b>Modo conexão</b> e clique em origem e destino, ou monte a relação pela aba de conexões.</li>
+    </ol>
+    <p style="margin:6px 0 0"><b>Auditoria</b></p>
+    <p style="margin:0;font-size:13px;color:#334155">O painel lateral mostra a ficha técnica do objetivo sob o cursor e, quando nada está selecionado, um resumo de conformidade: objetivos órfãos, raiz, topo, ciclos de causalidade, conexões repetidas e saltos de raia. Conexões com salto ou repetição aparecem em <b>tracejado laranja</b> no diagrama.</p>
+    <p style="margin:6px 0 0"><b>Regra de leitura do BSC</b></p>
+    <p style="margin:0;font-size:13px;color:#334155">O fluxo causal sobe: Pessoas → Processos Internos e Tecnologia → Clientes e Mercado → Econômico-Financeiro. Saltos de mais de um nível são permitidos, mas sinalizados como ponto de atenção.</p>
+    <p style="margin:6px 0 0"><b>Exportação</b></p>
+    <p style="margin:0;font-size:13px;color:#334155">O <b>JSON</b> guarda o cenário completo e pode ser reimportado (entra como um novo cenário). O <b>PNG</b> é gerado a 2× de resolução. O <b>PDF</b> sai pela impressão do navegador em A3 paisagem, exibindo apenas o mapa.</p>
+    <p style="margin:6px 0 0"><b>Atalhos</b> — <b>ESC</b>: cancela o modo conexão e desmarca a seleção.</p>
+    <p style="margin:6px 0 0;color:#64748b;font-size:12px">Tudo é salvo automaticamente no armazenamento local do seu navegador, por cenário. Nada é enviado para servidores.</p>`;
+}
+
+/* ---------- boot ---------- */
+(function boot() {
+  try {
+    carregarDB();
+    ligarUI();
+    ligarSWOT();
+    ligarCruzamentos();
+    ligarConexoes();
+    ligarModalOE();
+    ligarPainel();
+    ligarMapa();
+    renderAjuda();
+    renderTudo();
+    zoomFit();
+    const c = cenAtual();
+    toast("Cenário ativo: " + c.nome);
+  } catch (e) {
+    console.error(e);
+    document.body.insertAdjacentHTML("afterbegin",
+      `<div style="background:#fee2e2;color:#991b1b;padding:14px;font-weight:700;border-bottom:2px solid #dc2626">
+        Falha ao inicializar a aplicação: ${esc(e && e.message ? e.message : e)}</div>`);
+  }
+})();
+
+</script>
+<script type="module" src="https://static.cloudflareinsights.com/beacon.min.js/v31edd6df95cf4e85bb4c19e7a9bdbcba1788362987495" integrity="sha512-iIg7k2xntmwu6/uSb5tpc/hySgZc4eoL31yB29W6tJFo2akwjPWcEqnCEdJvGexCL0KEQwVYv5BlowfhVz26hg==" data-cf-beacon='{"version":"2024.11.0","token":"4edd5f8ec12a48cfa682ab8261b80a79","spa":2}' crossorigin="anonymous"></script>
+</body>
+</html>
